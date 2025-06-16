@@ -1,0 +1,48 @@
+# Go 相关
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+tmp/
+*.test
+*.out
+vendor/
+go.work
+
+# 环境变量和配置
+.env
+.env.*
+
+# IDE 相关
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 操作系统相关
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+logs/
+
+# 数据库相关
+*.sqlite
+*.sqlite3
+*.db
+
+# 性能分析
+*.prof
+*.pprof
+*.mem
+
+# 其他临时文件
+.cache/
+.temp/
+.tmp/
+node_modules/
+dist/
+build/
