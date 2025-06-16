@@ -1,7 +1,7 @@
 -- 创建游戏角色表
 CREATE TABLE IF NOT EXISTS characters (
     character_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    user_id CHAR(36) NOT NULL,
+    user_id INT UNSIGNED NOT NULL,
     character_name VARCHAR(100) NOT NULL,
     birth_country VARCHAR(100) NOT NULL,
     birth_year INTEGER NOT NULL,
@@ -43,7 +43,3 @@ CREATE TABLE IF NOT EXISTS characters (
 
 -- 创建索引
 CREATE INDEX idx_characters_user_id ON characters(user_id);
-CREATE INDEX idx_characters_is_active ON characters(is_active);
-CREATE INDEX idx_characters_created_at ON characters(created_at);
-CREATE INDEX idx_characters_life_stage ON characters(life_stage);
-CREATE INDEX idx_characters_game_completed ON characters(game_completed); 
