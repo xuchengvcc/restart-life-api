@@ -2,98 +2,136 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/xuchengvcc/restart-life-api/internal/api/routes"
+	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
 
 func main() {
+	// 加载配置
+	cfg, err := loadConfig()
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to load configuration")
+	}
+
 	// 初始化日志
-	initLogger()
+	initLogger(cfg)
 
-	// 创建Gin引擎
-	r := gin.Default()
+	// 设置路由
+	r := routes.SetupRoutes(cfg)
 
-	// 添加基础中间件
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
-	// 基础路由
-	setupRoutes(r)
+	// 在开发环境下添加测试路由
+	routes.SetupTestRoutes(r)
 
 	// 启动服务器
-	startServer(r)
+	startServer(r, cfg)
+}
+
+// loadConfig 加载配置
+func loadConfig() (*config.Config, error) {
+	// 尝试从环境变量获取配置文件路径
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		// 默认配置文件路径
+		configPath = "configs/development.yaml"
+		if os.Getenv("ENVIRONMENT") == "production" {
+			configPath = "configs/production.yaml"
+		}
+	}
+
+	// 检查配置文件是否存在
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		logrus.WithField("config_path", configPath).Warn("Config file not found, using environment variables")
+		return config.LoadFromEnv(), nil
+	}
+
+	// 从文件加载配置
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config from %s: %w", configPath, err)
+	}
+
+	logrus.WithField("config_path", configPath).Info("Configuration loaded successfully")
+	return cfg, nil
 }
 
 // initLogger 初始化日志配置
-func initLogger() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logrus.SetLevel(logrus.InfoLevel)
-	logrus.SetOutput(os.Stdout)
-}
+func initLogger(cfg *config.Config) {
+	// 设置日志级别
+	level, err := logrus.ParseLevel(cfg.Logging.Level)
+	if err != nil {
+		logrus.WithError(err).Warn("Invalid log level, using info level")
+		level = logrus.InfoLevel
+	}
+	logrus.SetLevel(level)
 
-// setupRoutes 设置基础路由
-func setupRoutes(r *gin.Engine) {
-	// 健康检查接口
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":    "healthy",
-			"timestamp": time.Now().Unix(),
-			"service":   "restart-life-api",
-			"version":   "v0.1.0",
+	// 设置日志格式
+	switch cfg.Logging.Format {
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC3339,
 		})
-	})
-
-	// Ping接口
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+	case "text":
+		logrus.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp:   true,
+			TimestampFormat: time.RFC3339,
 		})
-	})
-
-	// 服务就绪检查
-	r.GET("/ready", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ready",
-			"message": "Service is ready to accept requests",
+	default:
+		logrus.SetFormatter(&logrus.JSONFormatter{
+			TimestampFormat: time.RFC3339,
 		})
-	})
+	}
 
-	// API版本信息
-	r.GET("/version", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"service":    "restart-life-api",
-			"version":    "v0.1.0",
-			"build_time": time.Now().Format(time.RFC3339),
-			"go_version": "1.21",
-		})
-	})
+	// 设置输出
+	switch cfg.Logging.Output {
+	case "stdout":
+		logrus.SetOutput(os.Stdout)
+	case "stderr":
+		logrus.SetOutput(os.Stderr)
+	default:
+		logrus.SetOutput(os.Stdout)
+	}
 
-	logrus.Info("Routes setup completed")
+	logrus.WithFields(logrus.Fields{
+		"level":  cfg.Logging.Level,
+		"format": cfg.Logging.Format,
+		"output": cfg.Logging.Output,
+	}).Info("Logger initialized")
 }
 
 // startServer 启动HTTP服务器
-func startServer(r *gin.Engine) {
+func startServer(r http.Handler, cfg *config.Config) {
 	// 获取端口配置
-	port := os.Getenv("PORT")
+	port := cfg.Server.Port
 	if port == "" {
 		port = "8080"
 	}
 
 	// 创建HTTP服务器
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
+		Addr:         ":" + port,
+		Handler:      r,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	// 在goroutine中启动服务器
 	go func() {
-		logrus.WithField("port", port).Info("Starting HTTP server")
+		logrus.WithFields(logrus.Fields{
+			"port":          port,
+			"read_timeout":  cfg.Server.ReadTimeout,
+			"write_timeout": cfg.Server.WriteTimeout,
+			"idle_timeout":  cfg.Server.IdleTimeout,
+		}).Info("Starting HTTP server")
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logrus.WithError(err).Fatal("Failed to start server")
 		}
