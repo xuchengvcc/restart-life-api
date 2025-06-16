@@ -108,11 +108,11 @@ docker-push: docker-build ## Push Docker image to registry
 migrate-up: ## Run database migrations up
 	@echo "Running migrations up..."
 	@which migrate > /dev/null || (echo "Please install golang-migrate" && exit 1)
-	migrate -path migrations -database "postgres://postgres:password@localhost:5432/restart_life_dev?sslmode=disable" up
+	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/restart_life_dev" up
 
 migrate-down: ## Run database migrations down
 	@echo "Running migrations down..."
-	migrate -path migrations -database "postgres://postgres:password@localhost:5432/restart_life_dev?sslmode=disable" down
+	migrate -path migrations -database "mysql://root:password@tcp(localhost:3306)/restart_life_dev" down
 
 migrate-create: ## Create new migration file (usage: make migrate-create NAME=migration_name)
 	@echo "Creating migration: $(NAME)..."

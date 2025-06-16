@@ -6,13 +6,14 @@ server:
   idle_timeout: 120s
 
 database:
-  postgres:
+  mysql:
     host: localhost
-    port: 5432
+    port: 3306
     database: restart_life_dev
-    username: postgres
+    username: root
     password: password
-    sslmode: disable
+    charset: utf8mb4
+    parse_time: true
     max_open_conns: 10
     max_idle_conns: 5
     conn_max_lifetime: 300s

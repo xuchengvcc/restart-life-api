@@ -6,13 +6,14 @@ server:
   idle_timeout: 120s
 
 database:
-  postgres:
+  mysql:
     host: ${DB_HOST}
     port: ${DB_PORT}
     database: ${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-    sslmode: require
+    charset: utf8mb4
+    parse_time: true
     max_open_conns: 25
     max_idle_conns: 10
     conn_max_lifetime: 300s
