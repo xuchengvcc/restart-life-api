@@ -14,7 +14,7 @@
 
 ### 环境要求
 - Go 1.21+
-- PostgreSQL 15+
+- MySQL 8.0
 - Redis 7+
 - Docker & Docker Compose
 

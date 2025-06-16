@@ -11,7 +11,7 @@
 ### 1.1 多平台支持技术栈
 - **编程语言**: Go 1.21+
 - **Web框架**: Gin框架 (高性能HTTP服务)
-- **数据库**: PostgreSQL 15+ (ACID事务支持)
+- **数据库**: MySQL 8.0+ (ACID事务支持)
 - **缓存**: Redis 7+ (会话存储和高速缓存)
 - **API网关**: Nginx/Kong (跨域、限流、负载均衡)
 - **配置管理**: Viper (多环境配置)
@@ -43,9 +43,9 @@
 │   Desktop App   │                                      │
 └─────────────────┘                                      │
                                                ┌─────────────────┐
-┌─────────────────┐                           │   PostgreSQL    │
+┌─────────────────┐                           │     MySQL       │
 │  Admin Panel    │◄──────────────────────────┤   Database      │
-│  (Web Dashboard)│                           │   - JSONB       │
+│  (Web Dashboard)│                           │   - JSON        │
 └─────────────────┘                           │   - Full Text   │
                                                └─────────────────┘
                                                          │
@@ -128,7 +128,7 @@ restart-life-api/
 │   │   ├── game_service.go
 │   │   └── event_service.go
 │   ├── repository/              # 数据访问层
-│   │   ├── postgres/
+│   │   ├── mysql/
 │   │   │   ├── character_repo.go
 │   │   │   ├── event_repo.go
 │   │   │   └── user_repo.go
@@ -142,7 +142,7 @@ restart-life-api/
 │   │   ├── password.go
 │   │   └── validator.go
 │   └── database/                # 数据库连接
-│       ├── postgres.go
+│       ├── mysql.go
 │       └── redis.go
 ├── migrations/                  # 数据库迁移文件
 ├── docs/                        # API文档
@@ -1471,7 +1471,7 @@ import (
 
 type Config struct {
     Server   ServerConfig            `mapstructure:"server"`
-    Database database.PostgresConfig `mapstructure:"database"`
+    	Database database.MySQLConfig `mapstructure:"database"`
     Redis    database.RedisConfig    `mapstructure:"redis"`
     JWT      JWTConfig              `mapstructure:"jwt"`
     App      AppConfig              `mapstructure:"app"`
@@ -1534,7 +1534,7 @@ func setDefaults() {
     // Database defaults
     viper.SetDefault("database.host", "localhost")
     viper.SetDefault("database.port", 5432)
-    viper.SetDefault("database.user", "postgres")
+    	viper.SetDefault("database.user", "root")
     viper.SetDefault("database.dbname", "restart_life_db")
     viper.SetDefault("database.sslmode", "disable")
     viper.SetDefault("database.max_open_conns", 25)
@@ -1616,30 +1616,31 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - RESTART_LIFE_DATABASE_HOST=postgres
-      - RESTART_LIFE_DATABASE_PORT=5432
-      - RESTART_LIFE_DATABASE_USER=postgres
+      - RESTART_LIFE_DATABASE_HOST=mysql
+      - RESTART_LIFE_DATABASE_PORT=3306
+      - RESTART_LIFE_DATABASE_USER=root
       - RESTART_LIFE_DATABASE_PASSWORD=password
       - RESTART_LIFE_DATABASE_DBNAME=restart_life_db
       - RESTART_LIFE_REDIS_HOST=redis
       - RESTART_LIFE_REDIS_PORT=6379
       - RESTART_LIFE_JWT_SECRET_KEY=your-secret-key-here
     depends_on:
-      - postgres
+      - mysql
       - redis
     networks:
       - restart-life-network
 
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8.0
     environment:
-      - POSTGRES_DB=restart_life_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=restart_life_db
+      - MYSQL_USER=restart_user
+      - MYSQL_PASSWORD=password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./migrations:/docker-entrypoint-initdb.d
     networks:
       - restart-life-network
@@ -1654,7 +1655,7 @@ services:
       - restart-life-network
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
 
 networks:
@@ -2113,7 +2114,7 @@ services:
       - RESTART_LIFE_JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - RESTART_LIFE_CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -2127,19 +2128,20 @@ services:
         reservations:
           memory: 256M
 
-  postgres:
-    image: postgres:15-alpine
+  mysql:
+    image: mysql:8.0
     environment:
-      - POSTGRES_DB=restart_life_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=restart_life_db
+      - MYSQL_USER=restart_user
+      - MYSQL_PASSWORD=password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -2197,7 +2199,7 @@ services:
       - restart-life-network
 
 volumes:
-  postgres_data:
+  mysql_data:
   redis_data:
   grafana_data:
   static_files:

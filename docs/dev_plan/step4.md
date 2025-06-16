@@ -291,7 +291,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./migrations:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"

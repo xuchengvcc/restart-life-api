@@ -417,7 +417,7 @@ type ExportData struct {
 ```go
 // 数据处理
 - github.com/shopspring/decimal     // 精确数值计算
-- github.com/lib/pq                 // PostgreSQL JSON支持
+- github.com/go-sql-driver/mysql   // MySQL驱动
 - github.com/klauspost/compress     // 数据压缩
 
 // 数据导出

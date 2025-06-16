@@ -49,7 +49,7 @@ restart-life-api/
 │   ├── models/                  # 数据模型
 │   ├── services/                # 业务逻辑服务
 │   ├── repository/              # 数据访问层
-│   │   ├── postgres/
+│   │   ├── mysql/
 │   │   └── redis/
 │   └── config/                  # 配置管理
 ├── pkg/
@@ -207,7 +207,7 @@ GET /metrics     - 基础指标信息
 ```go
 // 主要依赖包
 - github.com/gin-gonic/gin          // Web框架
-- github.com/lib/pq                 // PostgreSQL驱动
+- github.com/go-sql-driver/mysql   // MySQL驱动
 - github.com/go-redis/redis/v8      // Redis客户端
 - github.com/spf13/viper            // 配置管理
 - github.com/sirupsen/logrus        // 日志库
@@ -230,11 +230,11 @@ server:
   mode: debug
   
 database:
-  postgres:
+  mysql:
     host: localhost
-    port: 5432
+    port: 3306
     database: restart_life_dev
-    username: postgres
+    username: root
     password: password
     sslmode: disable
     
