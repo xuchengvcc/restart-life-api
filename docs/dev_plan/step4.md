@@ -297,7 +297,7 @@ services:
       - "5432:5432"
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.0-alpine
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes

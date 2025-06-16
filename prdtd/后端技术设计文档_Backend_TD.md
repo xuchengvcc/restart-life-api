@@ -12,7 +12,7 @@
 - **编程语言**: Go 1.21+
 - **Web框架**: Gin框架 (高性能HTTP服务)
 - **数据库**: MySQL 8.0+ (ACID事务支持)
-- **缓存**: Redis 7+ (会话存储和高速缓存)
+- **缓存**: Redis 7.0 (会话存储和高速缓存)
 - **API网关**: Nginx/Kong (跨域、限流、负载均衡)
 - **配置管理**: Viper (多环境配置)
 - **日志**: Logrus/Zap (结构化日志)
@@ -1646,7 +1646,7 @@ services:
       - restart-life-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.0-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -2149,7 +2149,7 @@ services:
       - restart-life-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.0-alpine
     ports:
       - "6379:6379"
     volumes:

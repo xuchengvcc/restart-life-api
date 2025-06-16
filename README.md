@@ -15,7 +15,7 @@
 ### 环境要求
 - Go 1.21+
 - MySQL 8.0
-- Redis 7+
+- Redis 7.0
 - Docker & Docker Compose
 
 ### 本地开发
