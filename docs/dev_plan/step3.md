@@ -31,7 +31,7 @@
 #### 交付物
 - [ ] 关系管理API (`internal/api/handlers/relationship.go`)
 - [ ] 关系网络模型 (`internal/models/relationship.go`)
-- [ ] 关系影响算法 (`pkg/utils/relationship_calculator.go`)
+- [ ] 关系影响算法 (`internal/utils/relationship_calculator.go`)
 - [ ] 关系事件处理器 (`internal/services/relationship_service.go`)
 - [ ] 关系数据层 (`internal/repository/postgres/relationship_repo.go`)
 - [ ] 关系网络可视化数据接口
@@ -135,7 +135,7 @@ const (
 - [ ] 成就系统API (`internal/api/handlers/achievement.go`)
 - [ ] 成就解锁引擎 (`internal/services/achievement_service.go`)
 - [ ] 成就数据模型 (`internal/models/achievement.go`)
-- [ ] 成就统计服务 (`pkg/utils/achievement_calculator.go`)
+- [ ] 成就统计服务 (`internal/utils/achievement_calculator.go`)
 - [ ] 成就数据层 (`internal/repository/postgres/achievement_repo.go`)
 - [ ] 成就触发器系统
 
@@ -247,7 +247,7 @@ const (
 #### 交付物
 - [ ] 存档管理API (`internal/api/handlers/save.go`)
 - [ ] 统计分析模块 (`internal/services/stats_service.go`)
-- [ ] 数据导入导出 (`pkg/utils/data_export.go`)
+- [ ] 数据导入导出 (`internal/utils/data_export.go`)
 - [ ] 历史数据服务 (`internal/services/history_service.go`)
 - [ ] 存档数据层 (`internal/repository/postgres/save_repo.go`)
 - [ ] 云存档同步机制

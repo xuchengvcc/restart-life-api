@@ -51,8 +51,7 @@ restart-life-api/
 │   ├── repository/              # 数据访问层
 │   │   ├── mysql/
 │   │   └── redis/
-│   └── config/                  # 配置管理
-├── pkg/
+│   ├── config/                  # 配置管理
 │   ├── utils/                   # 工具函数
 │   └── database/                # 数据库连接
 ├── migrations/                  # 数据库迁移文件
@@ -89,7 +88,7 @@ restart-life-api/
 - [x] 配置数据库连接参数和环境变量
 
 #### 交付物
-- [x] 数据库连接模块 (`pkg/database/`)
+- [x] 数据库连接模块 (`internal/database/`)
 - [x] 数据库迁移脚本 (`migrations/`)
 - [x] 核心表结构SQL文件
 - [x] 数据库配置文档

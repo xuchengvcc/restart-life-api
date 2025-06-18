@@ -134,9 +134,8 @@ restart-life-api/
 │   │   │   └── user_repo.go
 │   │   └── redis/
 │   │       └── cache_repo.go
-│   └── config/                  # 配置管理
-│       └── config.go
-├── pkg/
+│   ├── config/                  # 配置管理
+│   │   └── config.go
 │   ├── utils/                   # 工具函数
 │   │   ├── jwt.go
 │   │   ├── password.go
@@ -1463,7 +1462,7 @@ package config
 
 import (
     "fmt"
-    "restart-life-api/pkg/database"
+    "restart-life-api/internal/database"
     "time"
     
     "github.com/spf13/viper"

@@ -29,7 +29,7 @@
 - [ ] 资源使用监控和告警
 
 #### 交付物
-- [ ] 缓存优化方案 (`pkg/cache/`)
+- [ ] 缓存优化方案 (`internal/cache/`)
 - [ ] 数据库优化脚本 (`scripts/db_optimization/`)
 - [ ] 性能测试报告 (`docs/performance/`)
 - [ ] 优化建议文档 (`docs/optimization_guide.md`)
@@ -115,10 +115,10 @@ type PerformanceMetrics struct {
 - [ ] 建立监控告警规则
 
 #### 交付物
-- [ ] 日志系统 (`pkg/logger/`)
+- [ ] 日志系统 (`internal/logger/`)
 - [ ] 监控仪表板 (`configs/grafana/`)
 - [ ] 报警配置 (`configs/alerting/`)
-- [ ] 统计分析工具 (`pkg/metrics/`)
+- [ ] 统计分析工具 (`internal/metrics/`)
 - [ ] 日志分析脚本 (`scripts/log_analysis/`)
 - [ ] 监控运维手册 (`docs/monitoring_guide.md`)
 

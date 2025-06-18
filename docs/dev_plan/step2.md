@@ -30,8 +30,8 @@
 
 #### 交付物
 - [ ] 用户认证API (`internal/api/handlers/auth.go`)
-- [ ] JWT令牌管理 (`pkg/utils/jwt.go`)
-- [ ] 密码安全模块 (`pkg/utils/password.go`)
+- [ ] JWT令牌管理 (`internal/utils/jwt.go`)
+- [ ] 密码安全模块 (`internal/utils/password.go`)
 - [ ] 认证中间件 (`internal/api/middleware/auth.go`)
 - [ ] 用户服务层 (`internal/services/auth_service.go`)
 - [ ] 用户数据层 (`internal/repository/postgres/user_repo.go`)
@@ -176,7 +176,7 @@ type CreateCharacterRequest struct {
 - [ ] 游戏引擎核心 (`internal/services/game_service.go`)
 - [ ] 事件系统 (`internal/services/event_service.go`)
 - [ ] 决策处理逻辑 (`internal/models/decision.go`)
-- [ ] 属性计算引擎 (`pkg/utils/attribute_calculator.go`)
+- [ ] 属性计算引擎 (`internal/utils/attribute_calculator.go`)
 - [ ] 游戏状态管理 (`internal/models/game_state.go`)
 - [ ] 游戏API接口 (`internal/api/handlers/game.go`)
 
