@@ -1,6 +1,6 @@
 # Makefile for Restart Life API
 
-.PHONY: help build run test clean fmt lint deps docker
+.PHONY: help build run test clean fmt lint deps docker docker-build docker-up docker-down docker-logs
 
 # Variables
 APP_NAME := restart-life-api
@@ -97,13 +97,60 @@ docker-build: ## Build Docker image
 	docker build -t $(DOCKER_IMAGE) .
 	@echo "Docker image built: $(DOCKER_IMAGE)"
 
-docker-run: ## Run Docker container
-	@echo "Running Docker container..."
-	docker run --rm -p 8080:8080 --env-file .env $(DOCKER_IMAGE)
+docker-up: ## Start all services with docker-compose
+	@echo "Starting all services..."
+	docker-compose up -d
+	@echo "Services started! Visit http://localhost:8080"
 
-docker-push: docker-build ## Push Docker image to registry
-	@echo "Pushing Docker image..."
-	docker push $(DOCKER_IMAGE)
+docker-down: ## Stop all services
+	@echo "Stopping all services..."
+	docker-compose down
+
+docker-down-volumes: ## Stop all services and remove volumes
+	@echo "Stopping all services and removing volumes..."
+	docker-compose down -v
+
+docker-logs: ## Show logs from all services
+	@echo "Showing logs..."
+	docker-compose logs -f
+
+docker-logs-app: ## Show logs from app service only
+	@echo "Showing app logs..."
+	docker-compose logs -f app
+
+docker-restart: ## Restart all services
+	@echo "Restarting all services..."
+	docker-compose restart
+
+docker-rebuild: ## Rebuild and restart the app service
+	@echo "Rebuilding and restarting app..."
+	docker-compose build app
+	docker-compose restart app
+
+docker-shell: ## Get shell access to app container
+	@echo "Entering app container..."
+	docker exec -it restart-life-api sh
+
+docker-mysql: ## Connect to MySQL in container
+	@echo "Connecting to MySQL..."
+	docker exec -it restart-mysql mysql -u root -p
+
+docker-redis: ## Connect to Redis in container
+	@echo "Connecting to Redis..."
+	docker exec -it restart-redis redis-cli
+
+docker-clean: ## Clean up Docker resources
+	@echo "Cleaning up Docker resources..."
+	docker system prune -f
+	docker volume prune -f
+
+docker-setup: docker-build docker-up ## Quick setup: build and start services
+	@echo "Docker setup completed!"
+	@echo "Services:"
+	@echo "  - API Server: http://localhost:8080"
+	@echo "  - Health Check: http://localhost:8080/health"
+	@echo "  - Database Admin: http://localhost:8081"
+	@echo "  - Redis Commander: http://localhost:8082"
 
 migrate-up: ## Run database migrations up
 	@echo "Running migrations up..."

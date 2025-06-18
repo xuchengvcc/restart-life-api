@@ -30,14 +30,43 @@ docker-compose up -d postgres redis
 go run cmd/server/main.go
 ```
 
-### Docker部署
-```bash
-# 构建并启动所有服务
-docker-compose up -d
+### Docker部署（推荐）
 
-# 查看服务状态
-docker-compose ps
+使用我们提供的便捷脚本：
+
+**Windows用户：**
+```cmd
+# 构建镜像
+scripts\build.bat
+
+# 启动所有服务
+scripts\start.bat
+
+# 停止服务
+scripts\stop.bat
 ```
+
+**Linux/macOS用户：**
+```bash
+# 给脚本添加执行权限
+chmod +x scripts/*.sh
+
+# 构建镜像
+./scripts/build.sh
+
+# 启动所有服务
+./scripts/start.sh
+
+# 停止服务
+./scripts/stop.sh
+```
+
+服务启动后访问：
+- 🚀 API服务: http://localhost:8080
+- 🗄️ 数据库管理: http://localhost:8081
+- 🔴 Redis管理: http://localhost:8082
+
+详细使用说明请参考 [Docker开发指南](DOCKER.md)。
 
 ## 📂 项目结构
 

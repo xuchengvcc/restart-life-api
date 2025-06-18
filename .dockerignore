@@ -1,0 +1,56 @@
+# Docker ignore file for Restart Life API
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+docs/
+prdtd/
+regulations/
+
+# Development files
+.env
+env.example
+tmp/
+logs/
+backups/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+testdata/
+
+# Docker files (avoid recursive copying)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Scripts (they're not needed in the container)
+scripts/
+*.sh
+
+# Development tools
+Makefile
+
+# Go vendor (if exists)
+vendor/

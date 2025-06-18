@@ -1,0 +1,76 @@
+# 多阶段构建 - 腾讯云镜像版本
+# 第一阶段：构建应用
+FROM mirror.ccs.tencentyun.com/library/golang:1.21-alpine AS builder
+
+# 使用腾讯云Alpine镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.ccs.tencentyun.com/g' /etc/apk/repositories
+
+# 安装必要的构建工具
+RUN apk add --no-cache git ca-certificates tzdata
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置Go模块代理和环境变量（使用中国代理）
+ENV GOPROXY=https://goproxy.cn,https://mirrors.cloud.tencent.com/go/,direct
+ENV GOSUMDB=sum.golang.google.cn
+ENV GO111MODULE=on
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+
+# 复制go mod文件
+COPY go.mod go.sum ./
+
+# 下载依赖（带重试机制）
+RUN go mod download -x
+
+# 复制源代码
+COPY . .
+
+# 构建应用
+RUN go build -a -installsuffix cgo -ldflags="-w -s" -o main cmd/server/main.go
+
+# 第二阶段：运行时镜像
+FROM mirror.ccs.tencentyun.com/library/alpine:latest
+
+# 使用腾讯云Alpine镜像源
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.ccs.tencentyun.com/g' /etc/apk/repositories
+
+# 安装必要的包
+RUN apk --no-cache add ca-certificates tzdata wget
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 创建非root用户
+RUN addgroup -g 1001 appgroup && \
+    adduser -D -s /bin/sh -u 1001 -G appgroup appuser
+
+# 设置工作目录
+WORKDIR /app
+
+# 从构建阶段复制二进制文件
+COPY --from=builder /app/main .
+
+# 复制配置文件
+COPY --from=builder /app/configs ./configs
+
+# 创建日志目录
+RUN mkdir -p logs && chown -R appuser:appgroup /app
+
+# 切换到非root用户
+USER appuser
+
+# 设置环境变量
+ENV CONFIG_ENV=docker
+
+# 暴露端口
+EXPOSE 8080
+
+# 设置健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# 启动应用
+CMD ["./main"]
