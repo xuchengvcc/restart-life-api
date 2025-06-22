@@ -41,8 +41,8 @@ func loadConfig() (*config.Config, error) {
 	if configPath == "" {
 		// 默认配置文件路径
 		configPath = "configs/development.yaml"
-		if os.Getenv("ENVIRONMENT") == "production" {
-			configPath = "configs/production.yaml"
+		if os.Getenv("CONFIG_ENV") == "live" {
+			configPath = "configs/live.yaml"
 		}
 	}
 

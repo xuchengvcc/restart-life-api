@@ -428,7 +428,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - name: Deploy to production
+      - name: Deploy to live
         run: |
           # 部署脚本
           echo "部署到生产环境"

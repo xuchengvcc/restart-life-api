@@ -10,8 +10,8 @@ database:
     host: mysql
     port: 3306
     database: restart_life_dev
-    username: root
-    password: password
+    username: restart_user
+    password: restart_pass
     charset: utf8mb4
     parse_time: true
     max_open_conns: 10

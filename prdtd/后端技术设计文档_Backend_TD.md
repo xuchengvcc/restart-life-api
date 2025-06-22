@@ -2422,13 +2422,13 @@ jobs:
     - name: Deploy to Kubernetes
       run: |
         # 这里添加部署到K8s集群的逻辑
-        echo "Deploying to production cluster"
+        echo "Deploying to live cluster"
 ```
 
 ### 6.6 环境配置管理
 
 ```yaml
-# config/production.yaml
+# config/live.yaml
 server:
   port: 8080
   host: "0.0.0.0"

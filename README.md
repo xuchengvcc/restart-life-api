@@ -57,6 +57,16 @@ chmod +x scripts/*.sh
 ./scripts/start.sh china
 ```
 
+**测试环境部署+运行**
+```
+docker-compose --env-file .env.test -f docker-compose.tencent.yml up -d
+```
+
+**生产环境部署+运行**
+```
+docker-compose --env-file .env.live -f docker-compose.tencent.yml up -d
+```
+
 **Windows用户：**
 ```cmd
 # 构建镜像（官方源）
