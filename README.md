@@ -34,18 +34,6 @@ go run cmd/server/main.go
 
 使用我们提供的便捷脚本：
 
-**Windows用户：**
-```cmd
-# 构建镜像
-scripts\build.bat
-
-# 启动所有服务
-scripts\start.bat
-
-# 停止服务
-scripts\stop.bat
-```
-
 **Linux/macOS用户：**
 ```bash
 # 给脚本添加执行权限
@@ -59,6 +47,34 @@ chmod +x scripts/*.sh
 
 # 停止服务
 ./scripts/stop.sh
+
+# 使用腾讯云镜像优化构建和启动
+./scripts/build.sh tencent
+./scripts/start.sh tencent
+
+# 使用中国网络优化构建和启动
+./scripts/build.sh china
+./scripts/start.sh china
+```
+
+**Windows用户：**
+```cmd
+# 构建镜像（官方源）
+scripts\build.bat
+# 构建镜像（腾讯云镜像）
+scripts\build.bat tencent
+# 构建镜像（中国网络优化）
+scripts\build.bat china
+
+# 启动所有服务（官方源）
+scripts\start.bat
+# 启动所有服务（腾讯云镜像）
+scripts\start.bat tencent
+# 启动所有服务（中国网络优化）
+scripts\start.bat china
+
+# 停止服务
+scripts\stop.bat
 ```
 
 服务启动后访问：

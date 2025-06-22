@@ -12,22 +12,23 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== Restart Life API Docker Stop Script ===${NC}"
 
+echo -e "${YELLOW}Stopping all running Docker containers...${NC}"
+docker stop $(docker ps -q) 2>/dev/null || true
+
+echo -e "${YELLOW}Stopping all services via docker-compose...${NC}"
 # 检查docker-compose是否存在
 if ! command -v docker-compose &> /dev/null; then
     echo -e "${RED}Error: docker-compose is not installed or not in PATH${NC}"
     exit 1
 fi
 
-echo -e "${YELLOW}Stopping all services...${NC}"
 docker-compose down
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ All services stopped successfully!${NC}"
-    
     # 询问是否清理数据
     echo -e "${YELLOW}Do you want to remove volumes (this will delete all data)? (y/N): ${NC}"
     read -r choice
-    
     if [[ "$choice" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Removing volumes...${NC}"
         docker-compose down -v
@@ -35,7 +36,6 @@ if [ $? -eq 0 ]; then
     else
         echo -e "${BLUE}Data volumes preserved.${NC}"
     fi
-    
     echo -e "${GREEN}=== Other Useful Commands ===${NC}"
     echo -e "🧹 Clean up everything:    ${BLUE}docker-compose down -v --remove-orphans${NC}"
     echo -e "📊 View stopped containers: ${BLUE}docker-compose ps -a${NC}"

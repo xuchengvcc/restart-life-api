@@ -18,6 +18,12 @@ if "%1"=="tencent" (
     set VERSION=latest
     set DOCKER_IMAGE=%PROJECT_NAME%:latest
     echo Using Tencent Cloud mirror for faster build...
+) else if "%1"=="china" (
+    set MIRROR_TYPE=china
+    set DOCKERFILE=Dockerfile.china
+    set VERSION=china
+    set DOCKER_IMAGE=%PROJECT_NAME%:china
+    echo Using China mirror for faster build...
 )
 
 echo === Restart Life API Docker Build Script ===
@@ -33,24 +39,27 @@ if errorlevel 1 (
 )
 
 REM 检查Dockerfile是否存在
-if not exist "%DOCKERFILE%" (    echo Error: %DOCKERFILE% not found
-    echo Available options: build.bat [tencent]
+if not exist "%DOCKERFILE%" (
+    echo Error: %DOCKERFILE% not found
+    echo Available options: build.bat [tencent|china]
     pause
     exit /b 1
 )
 
 REM 构建Docker镜像
 echo Building Docker image...
-echo Using Dockerfile: %DOCKERFILE%
+echo Using Dockerfile: %DOCKERFILE%"
 docker build -f %DOCKERFILE% -t "%DOCKER_IMAGE%" .
 
 if errorlevel 1 (
     echo ❌ Docker build failed
     echo.
-    echo === 故障排除建议 ===    if "%MIRROR_TYPE%"=="official" (
+    echo === 故障排除建议 ===
+    if "%MIRROR_TYPE%"=="official" (
         echo 1. 尝试腾讯镜像: scripts\build.bat tencent
-        echo 2. 运行网络诊断: scripts\fix-network.bat
-        echo 3. 配置Docker镜像加速器（参考MIRROR-SETUP.md）
+        echo 2. 尝试中国镜像: scripts\build.bat china
+        echo 3. 运行网络诊断: scripts\fix-network.bat
+        echo 4. 配置Docker镜像加速器（参考MIRROR-SETUP.md）
     ) else (
         echo 1. 检查网络连接
         echo 2. 运行网络诊断: scripts\fix-network.bat
@@ -71,6 +80,8 @@ echo ✅ Build completed successfully!
 echo Next steps:
 if "%MIRROR_TYPE%"=="tencent" (
     echo   1. Run: scripts\start.bat tencent to start with Tencent mirrors
+) else if "%MIRROR_TYPE%"=="china" (
+    echo   1. Run: scripts\start.bat china to start with China mirrors
 ) else (
     echo   1. Run: scripts\start.bat to start the application
 )

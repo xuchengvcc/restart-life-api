@@ -4,6 +4,10 @@ setlocal enabledelayedexpansion
 
 echo === Restart Life API Docker Stop Script ===
 
+echo Stopping all running Docker containers...
+for /f "tokens=1" %%i in ('docker ps -q') do docker stop %%i >nul 2>&1
+
+echo Stopping all services...
 REM 检查docker-compose是否存在
 docker-compose --version >nul 2>&1
 if errorlevel 1 (
@@ -12,7 +16,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Stopping all services...
 docker-compose down
 
 if errorlevel 1 (
