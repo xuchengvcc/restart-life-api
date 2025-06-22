@@ -9,18 +9,18 @@ if "%VERSION%"=="" set VERSION=latest
 set DOCKER_IMAGE=%PROJECT_NAME%:%VERSION%
 
 REM 检查镜像源选择
-set DOCKERFILE=Dockerfile
+set DOCKERFILE=docker\Dockerfile
 set MIRROR_TYPE=official
 
 if "%1"=="tencent" (
     set MIRROR_TYPE=tencent
-    set DOCKERFILE=Dockerfile.tencent
+    set DOCKERFILE=docker\Dockerfile.tencent
     set VERSION=latest
     set DOCKER_IMAGE=%PROJECT_NAME%:latest
     echo Using Tencent Cloud mirror for faster build...
 ) else if "%1"=="china" (
     set MIRROR_TYPE=china
-    set DOCKERFILE=Dockerfile.china
+    set DOCKERFILE=docker\Dockerfile.china
     set VERSION=china
     set DOCKER_IMAGE=%PROJECT_NAME%:china
     echo Using China mirror for faster build...
@@ -48,7 +48,7 @@ if not exist "%DOCKERFILE%" (
 
 REM 构建Docker镜像
 echo Building Docker image...
-echo Using Dockerfile: %DOCKERFILE%"
+echo Using Dockerfile: %DOCKERFILE%
 docker build -f %DOCKERFILE% -t "%DOCKER_IMAGE%" .
 
 if errorlevel 1 (

@@ -5,12 +5,12 @@ setlocal enabledelayedexpansion
 set PROJECT_NAME=restart-life-api
 
 REM 检查镜像源选择
-set COMPOSE_FILE=docker-compose.yml
+set COMPOSE_FILE=docker\docker-compose.yml
 set MIRROR_TYPE=official
 
 if "%1"=="tencent" (
     set MIRROR_TYPE=tencent
-    set COMPOSE_FILE=docker-compose.tencent.yml
+    set COMPOSE_FILE=docker\docker-compose.tencent.yml
     echo Using Tencent Cloud mirror for faster startup...
 )
 

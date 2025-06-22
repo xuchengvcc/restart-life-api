@@ -37,12 +37,12 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # 选择Dockerfile
-DOCKERFILE="Dockerfile"
+DOCKERFILE="docker/Dockerfile"
 if [ "$USE_TENCENT_MIRROR" = true ]; then
-    DOCKERFILE="Dockerfile.tencent"
+    DOCKERFILE="docker/Dockerfile.tencent"
     echo -e "${YELLOW}Using optimized Dockerfile for Tencent Cloud...${NC}"
 elif [ "$USE_CHINA_MIRROR" = true ]; then
-    DOCKERFILE="Dockerfile.china"
+    DOCKERFILE="docker/Dockerfile.china"
     echo -e "${YELLOW}Using optimized Dockerfile for China network...${NC}"
 fi
 

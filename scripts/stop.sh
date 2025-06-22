@@ -22,7 +22,7 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-docker-compose down
+docker-compose -f docker/docker-compose.yml down
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ All services stopped successfully!${NC}"
@@ -31,14 +31,14 @@ if [ $? -eq 0 ]; then
     read -r choice
     if [[ "$choice" =~ ^[Yy]$ ]]; then
         echo -e "${YELLOW}Removing volumes...${NC}"
-        docker-compose down -v
+        docker-compose -f docker/docker-compose.yml down -v
         echo -e "${GREEN}✅ Volumes removed successfully!${NC}"
     else
         echo -e "${BLUE}Data volumes preserved.${NC}"
     fi
     echo -e "${GREEN}=== Other Useful Commands ===${NC}"
-    echo -e "🧹 Clean up everything:    ${BLUE}docker-compose down -v --remove-orphans${NC}"
-    echo -e "📊 View stopped containers: ${BLUE}docker-compose ps -a${NC}"
+    echo -e "🧹 Clean up everything:    ${BLUE}docker-compose -f docker/docker-compose.yml down -v --remove-orphans${NC}"
+    echo -e "📊 View stopped containers: ${BLUE}docker-compose -f docker/docker-compose.yml ps -a${NC}"
     echo -e "🔍 Remove unused images:   ${BLUE}docker image prune -f${NC}"
     
 else

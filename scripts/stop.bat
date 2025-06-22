@@ -16,7 +16,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-docker-compose down
+docker-compose -f docker\docker-compose.yml down
 
 if errorlevel 1 (
     echo ❌ Failed to stop services
@@ -31,7 +31,7 @@ echo.
 set /p choice="Do you want to remove volumes (this will delete all data)? (y/N): "
 if /i "%choice%"=="y" (
     echo Removing volumes...
-    docker-compose down -v
+    docker-compose -f docker\docker-compose.yml down -v
     echo ✅ Volumes removed successfully!
 ) else (
     echo Data volumes preserved.
@@ -39,8 +39,8 @@ if /i "%choice%"=="y" (
 
 echo.
 echo === Other Useful Commands ===
-echo 🧹 Clean up everything:    docker-compose down -v --remove-orphans
-echo 📊 View stopped containers: docker-compose ps -a
+echo 🧹 Clean up everything:    docker-compose -f docker\docker-compose.yml down -v --remove-orphans
+echo 📊 View stopped containers: docker-compose -f docker\docker-compose.yml ps -a
 echo 🔍 Remove unused images:   docker image prune -f
 
 echo.

@@ -16,10 +16,10 @@ echo -e "${BLUE}=== Restart Life API Docker Start Script ===${NC}"
 
 # 检查是否使用腾讯云镜像
 USE_TENCENT_MIRROR=false
-COMPOSE_FILE="docker-compose.yml"
+COMPOSE_FILE="docker/docker-compose.yml"
 if [ "$1" = "tencent" ]; then
     USE_TENCENT_MIRROR=true
-    COMPOSE_FILE="docker-compose.tencent.yml"
+    COMPOSE_FILE="docker/docker-compose.tencent.yml"
     echo -e "${YELLOW}Using Tencent Cloud mirror for faster startup...${NC}"
 fi
 

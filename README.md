@@ -59,12 +59,12 @@ chmod +x scripts/*.sh
 
 **测试环境部署+运行**
 ```
-docker-compose --env-file .env.test -f docker-compose.tencent.yml up -d
+docker-compose --env-file .env.test -f docker/docker-compose.tencent.yml up -d
 ```
 
 **生产环境部署+运行**
 ```
-docker-compose --env-file .env.live -f docker-compose.tencent.yml up -d
+docker-compose --env-file .env.live -f docker/docker-compose.tencent.yml up -d
 ```
 
 **Windows用户：**
