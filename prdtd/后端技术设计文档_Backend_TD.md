@@ -9,7 +9,7 @@
 ## 1. 多平台后端架构概览
 
 ### 1.1 多平台支持技术栈
-- **编程语言**: Go 1.21+
+- **编程语言**: Go 1.23.8+
 - **Web框架**: Gin框架 (高性能HTTP服务)
 - **数据库**: MySQL 8.0+ (ACID事务支持)
 - **缓存**: Redis 7.0 (会话存储和高速缓存)
@@ -1563,7 +1563,7 @@ func setDefaults() {
 
 ```dockerfile
 # docker/Dockerfile
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23.8-alpine AS builder
 
 # 安装必要的工具
 RUN apk add --no-cache git ca-certificates tzdata
@@ -1878,7 +1878,7 @@ CREATE INDEX idx_characters_user_id ON characters(user_id);
 // go.mod
 module restart-life-api
 
-go 1.21
+go 1.23.8
 
 require (
     github.com/gin-gonic/gin v1.9.1
@@ -1901,7 +1901,7 @@ require (
 
 ```dockerfile
 # docker/Dockerfile.multiplatform
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23.8-alpine AS builder
 
 # 安装必要的工具
 RUN apk add --no-cache git ca-certificates tzdata
@@ -2363,7 +2363,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.21
+        go-version: 1.23.8
     
     - name: Run tests
       run: |

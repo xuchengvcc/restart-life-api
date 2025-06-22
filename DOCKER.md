@@ -270,7 +270,7 @@ failed to solve: alpine:latest: failed to resolve source metadata
 3. **手动拉取镜像**
    ```bash
    # 预先拉取所需镜像
-   docker pull golang:1.21-alpine
+   docker pull golang:1.23.8-alpine
    docker pull alpine:latest
    docker pull mysql:8.0
    docker pull redis:7-alpine

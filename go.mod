@@ -1,8 +1,6 @@
 module github.com/xuchengvcc/restart-life-api
 
-go 1.21.0
-
-toolchain go1.23.8
+go 1.23.8
 
 require (
 	github.com/gin-gonic/gin v1.9.1

@@ -3,7 +3,7 @@
 ## 问题描述
 如果遇到以下错误：
 ```
-failed to solve: golang:1.21-alpine: failed to resolve source metadata
+failed to solve: golang:1.23.8-alpine: failed to resolve source metadata
 ```
 
 这是因为网络连接问题导致无法访问Docker Hub。

@@ -9,7 +9,7 @@ BUILD_DIR := build
 DOCKER_IMAGE := $(APP_NAME):$(VERSION)
 
 # Go related variables
-GO_VERSION := 1.21
+GO_VERSION := 1.23.8
 GOCMD := go
 GOBUILD := $(GOCMD) build
 GOCLEAN := $(GOCMD) clean

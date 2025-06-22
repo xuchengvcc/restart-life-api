@@ -1,13 +1,13 @@
 # 多阶段构建 - 中国网络优化版本
 # 第一阶段：构建应用
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23.8-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
 
 # 设置Go模块代理和环境变量 - 使用中国镜像源
-# ENV GOPROXY=https://goproxy.cn,direct
-ENV GOPROXY=https://goproxy.io
+ENV GOPROXY=https://goproxy.cn,direct
+# ENV GOPROXY=https://goproxy.io
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
 ENV GOOS=linux

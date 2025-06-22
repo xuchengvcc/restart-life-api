@@ -13,7 +13,7 @@
 ## 🚀 快速开始
 
 ### 环境要求
-- Go 1.21+
+- Go 1.23.8+
 - MySQL 8.0
 - Redis 7.0
 - Docker & Docker Compose

@@ -243,7 +243,7 @@ groups:
 #### Docker配置
 ```dockerfile
 # 多阶段构建
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23.8-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
@@ -405,7 +405,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version: 1.23.8
       - name: Run tests
         run: |
           go test -v -race -coverprofile=coverage.out ./...

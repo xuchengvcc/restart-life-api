@@ -168,7 +168,7 @@ func (h *HealthHandler) Version(c *gin.Context) {
 		Service:   "restart-life-api",
 		Version:   h.version,
 		BuildTime: time.Now().Format(time.RFC3339),
-		GoVersion: "1.21",
+		GoVersion: "1.23.8",
 		// GitCommit: 可以在构建时注入Git提交哈希
 	}
 

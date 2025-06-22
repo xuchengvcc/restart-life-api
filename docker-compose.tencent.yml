@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 主应用服务
   app:
@@ -91,7 +89,7 @@ services:
         condition: service_healthy
   # Redis Commander
   redis-commander:
-    image: mirror.ccs.tencentyun.com/library/redis-commander:latest
+    image: rediscommander/redis-commander:latest
     container_name: restart-redis-commander
     ports:
       - "8082:8081"
