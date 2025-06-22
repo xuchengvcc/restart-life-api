@@ -1,9 +1,6 @@
-# 多阶段构建 - 腾讯云镜像版本
+# 多阶段构建 - 腾讯云代理版本
 # 第一阶段：构建应用
-FROM mirror.ccs.tencentyun.com/library/golang:1.21-alpine AS builder
-
-# 使用腾讯云Alpine镜像源
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.ccs.tencentyun.com/g' /etc/apk/repositories
+FROM golang:1.21-alpine AS builder
 
 # 安装必要的构建工具
 RUN apk add --no-cache git ca-certificates tzdata
@@ -11,8 +8,8 @@ RUN apk add --no-cache git ca-certificates tzdata
 # 设置工作目录
 WORKDIR /app
 
-# 设置Go模块代理和环境变量（使用中国代理）
-ENV GOPROXY=https://goproxy.cn,https://mirrors.cloud.tencent.com/go/,direct
+# 设置Go模块代理和环境变量（使用腾讯云代理）
+ENV GOPROXY=https://mirrors.cloud.tencent.com/go/,https://goproxy.cn,direct
 ENV GOSUMDB=sum.golang.google.cn
 ENV GO111MODULE=on
 ENV CGO_ENABLED=0
@@ -31,10 +28,7 @@ COPY . .
 RUN go build -a -installsuffix cgo -ldflags="-w -s" -o main cmd/server/main.go
 
 # 第二阶段：运行时镜像
-FROM mirror.ccs.tencentyun.com/library/alpine:latest
-
-# 使用腾讯云Alpine镜像源
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.ccs.tencentyun.com/g' /etc/apk/repositories
+FROM alpine:latest
 
 # 安装必要的包
 RUN apk --no-cache add ca-certificates tzdata wget

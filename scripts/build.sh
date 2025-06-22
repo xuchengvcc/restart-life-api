@@ -17,11 +17,15 @@ DOCKER_IMAGE="$PROJECT_NAME:$VERSION"
 
 echo -e "${BLUE}=== Restart Life API Docker Build Script ===${NC}"
 
-# 检查是否使用腾讯云镜像
+# 检查是否使用腾讯云镜像或中国镜像
 USE_TENCENT_MIRROR=false
+USE_CHINA_MIRROR=false
 if [ "$2" = "tencent" ] || [ "$1" = "tencent" ]; then
     USE_TENCENT_MIRROR=true
     echo -e "${YELLOW}Using Tencent Cloud mirror for faster build...${NC}"
+elif [ "$2" = "china" ] || [ "$1" = "china" ]; then
+    USE_CHINA_MIRROR=true
+    echo -e "${YELLOW}Using China mirror for faster build...${NC}"
 fi
 
 echo -e "${YELLOW}Building Docker image: $DOCKER_IMAGE${NC}"
@@ -37,6 +41,9 @@ DOCKERFILE="Dockerfile"
 if [ "$USE_TENCENT_MIRROR" = true ]; then
     DOCKERFILE="Dockerfile.tencent"
     echo -e "${YELLOW}Using optimized Dockerfile for Tencent Cloud...${NC}"
+elif [ "$USE_CHINA_MIRROR" = true ]; then
+    DOCKERFILE="Dockerfile.china"
+    echo -e "${YELLOW}Using optimized Dockerfile for China network...${NC}"
 fi
 
 # 构建Docker镜像
@@ -60,6 +67,7 @@ if [ $? -eq 0 ]; then
     echo -e "  2. Or run: ${BLUE}docker-compose up -d${NC} to start all services"
 else
     echo -e "${RED}❌ Docker build failed${NC}"
-    echo -e "${YELLOW}Tip: If you're in China, try: ${BLUE}./scripts/build.sh tencent${NC}"
+    echo -e "${YELLOW}Tip: If you're in China, try: ${BLUE}./scripts/build.sh china${NC}"
+    echo -e "${YELLOW}Or if using Tencent Cloud: ${BLUE}./scripts/build.sh tencent${NC}"
     exit 1
 fi
