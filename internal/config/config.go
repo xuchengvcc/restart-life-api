@@ -1,6 +1,7 @@
 package config
 
 import (
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -81,8 +82,8 @@ func Load(configPath string) (*Config, error) {
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("yaml")
 
-	// 设置环境变量前缀
-	viper.SetEnvPrefix("RESTART_LIFE")
+	// 支持嵌套字段用下划线，如 DATABASE_MYSQL_PORT
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	// 读取配置文件
@@ -100,10 +101,8 @@ func Load(configPath string) (*Config, error) {
 
 // LoadFromEnv 从环境变量加载配置
 func LoadFromEnv() *Config {
-	viper.SetEnvPrefix("RESTART_LIFE")
 	viper.AutomaticEnv()
-
-	// 设置默认值
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	setDefaults()
 
 	var config Config

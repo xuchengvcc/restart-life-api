@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/xuchengvcc/restart-life-api/internal/api/routes"
 	"github.com/xuchengvcc/restart-life-api/internal/config"
-	// "github.com/xuchengvcc/restart-life-api/internal/database"
+	"github.com/xuchengvcc/restart-life-api/internal/database"
 )
 
 func main() {
@@ -26,20 +26,20 @@ func main() {
 	initLogger(cfg)
 
 	// 初始化 MySQL 连接
-	// db, err := database.InitMySQLFromConfig(cfg)
-	// if err != nil {
-	// 	logrus.WithError(err).Fatal("Failed to connect to MySQL")
-	// }
-	// defer db.DB.Close()
-	// logrus.Info("MySQL connected successfully")
+	db, err := database.InitMySQLFromConfig(cfg)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to connect to MySQL")
+	}
+	defer db.DB.Close()
+	logrus.Info("MySQL connected successfully")
 
 	// 初始化 Redis 连接
-	// redisClient, err := database.InitRedisFromConfig(cfg)
-	// if err != nil {
-	// 	logrus.WithError(err).Fatal("Failed to connect to Redis")
-	// }
-	// defer redisClient.Client.Close()
-	// logrus.Info("Redis connected successfully")
+	redisClient, err := database.InitRedisFromConfig(cfg)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to connect to Redis")
+	}
+	defer redisClient.Client.Close()
+	logrus.Info("Redis connected successfully")
 
 	// 设置路由
 	r := routes.SetupRoutes(cfg)

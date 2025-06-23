@@ -40,21 +40,21 @@ go run cmd/server/main.go
 chmod +x scripts/*.sh
 
 # 构建镜像
-./scripts/build.sh
+ENV_FILE=../.env.test ./scripts/build.sh
 
 # 启动所有服务
-./scripts/start.sh
+ENV_FILE=../.env.test ./scripts/start.sh
 
 # 停止服务
-./scripts/stop.sh
+ENV_FILE=../.env.test ./scripts/stop.sh
 
 # 使用腾讯云镜像优化构建和启动
-./scripts/build.sh tencent
-./scripts/start.sh tencent
+ENV_FILE=../.env.test ./scripts/build.sh tencent
+ENV_FILE=../.env.test ./scripts/start.sh tencent
 
 # 使用中国网络优化构建和启动
-./scripts/build.sh china
-./scripts/start.sh china
+ENV_FILE=../.env.test ./scripts/build.sh china
+ENV_FILE=../.env.test ./scripts/start.sh china
 ```
 
 **测试环境build image**

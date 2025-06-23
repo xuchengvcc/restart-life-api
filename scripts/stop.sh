@@ -11,7 +11,6 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}=== Restart Life API Docker Stop Script ===${NC}"
-
 echo -e "${YELLOW}Stopping all running Docker containers...${NC}"
 docker stop $(docker ps -q) 2>/dev/null || true
 
@@ -37,7 +36,7 @@ if [ $? -eq 0 ]; then
         echo -e "${BLUE}Data volumes preserved.${NC}"
     fi
     echo -e "${GREEN}=== Other Useful Commands ===${NC}"
-    echo -e "🧹 Clean up everything:    ${BLUE}docker-compose -f docker/docker-compose.yml down -v --remove-orphans${NC}"
+    echo -e "🧹 Clean up everything:    ${BLUE}docker-compose -f docker/docker-compose.yml --env-file $ENV_FILE down -v --remove-orphans${NC}"
     echo -e "📊 View stopped containers: ${BLUE}docker-compose -f docker/docker-compose.yml ps -a${NC}"
     echo -e "🔍 Remove unused images:   ${BLUE}docker image prune -f${NC}"
     
