@@ -2,18 +2,17 @@ services:
   # 主应用服务
   app:
     build:
-      context: .
-      dockerfile: Dockerfile.tencent
+      context: ..
+      dockerfile: docker/Dockerfile.tencent
     image: restart-life-api:latest
     container_name: restart-life-api
     ports:
       - "8080:8080"
     environment:
       - GIN_MODE=debug
-      - CONFIG_ENV=docker
     volumes:
-      - ./logs:/app/logs
-      - ./configs:/app/configs:ro
+      - ../logs:/app/logs
+      - ../configs:/app/configs:ro
     depends_on:
       mysql:
         condition: service_healthy
@@ -28,6 +27,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    env_file:
+      - ${ENV_FILE}
   # MySQL数据库服务 - 使用腾讯云镜像
   mysql:
     image: mirror.ccs.tencentyun.com/library/mysql:8.0
@@ -41,9 +42,9 @@ services:
       MYSQL_PASSWORD: restart_pass
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql/conf:/etc/mysql/conf.d:ro
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
-      - ./migrations:/migrations:ro
+      - ../docker/mysql/conf:/etc/mysql/conf.d:ro
+      - ../docker/mysql/init:/docker-entrypoint-initdb.d:ro
+      - ../migrations:/migrations:ro
     networks:
       - restart-network
     restart: unless-stopped
@@ -62,7 +63,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./docker/redis:/usr/local/etc/redis:ro
+      - ../docker/redis:/usr/local/etc/redis:ro
     networks:
       - restart-network
     restart: unless-stopped

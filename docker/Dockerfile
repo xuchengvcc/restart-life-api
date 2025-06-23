@@ -54,9 +54,6 @@ RUN mkdir -p logs && chown -R appuser:appgroup /app
 # 切换到非root用户
 USER appuser
 
-# 设置环境变量
-ENV CONFIG_ENV=docker
-
 # 暴露端口
 EXPOSE 8080
 

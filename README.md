@@ -57,14 +57,23 @@ chmod +x scripts/*.sh
 ./scripts/start.sh china
 ```
 
+**测试环境build image**
+```
+ENV_FILE=../.env.test docker-compose -f docker/docker-compose.tencent.yml build
+```
+**生产环境build image**
+```
+ENV_FILE=../.env.live docker-compose -f docker/docker-compose.tencent.yml build
+```
+
 **测试环境部署+运行**
 ```
-docker-compose --env-file .env.test -f docker/docker-compose.tencent.yml up -d
+ENV_FILE=../.env.test docker-compose -f docker/docker-compose.tencent.yml up -d
 ```
 
 **生产环境部署+运行**
 ```
-docker-compose --env-file .env.live -f docker/docker-compose.tencent.yml up -d
+ENV_FILE=../.env.live docker-compose -f docker/docker-compose.tencent.yml up -d
 ```
 
 **Windows用户：**

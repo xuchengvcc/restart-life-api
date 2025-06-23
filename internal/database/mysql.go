@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
+	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
 
 // MySQLConfig MySQL配置
@@ -112,4 +113,20 @@ func (m *MySQLDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // QueryRow 查询单行数据
 func (m *MySQLDB) QueryRow(query string, args ...interface{}) *sql.Row {
 	return m.DB.QueryRow(query, args...)
+}
+
+// InitMySQLFromConfig 根据全局配置初始化 MySQL 连接
+func InitMySQLFromConfig(cfg *config.Config) (*MySQLDB, error) {
+	return NewMySQLDB(&MySQLConfig{
+		Host:            cfg.Database.MySQL.Host,
+		Port:            cfg.Database.MySQL.Port,
+		Database:        cfg.Database.MySQL.Database,
+		Username:        cfg.Database.MySQL.Username,
+		Password:        cfg.Database.MySQL.Password,
+		Charset:         cfg.Database.MySQL.Charset,
+		ParseTime:       cfg.Database.MySQL.ParseTime,
+		MaxOpenConns:    cfg.Database.MySQL.MaxOpenConns,
+		MaxIdleConns:    cfg.Database.MySQL.MaxIdleConns,
+		MaxLifetime:     cfg.Database.MySQL.ConnMaxLifetime,
+	})
 }

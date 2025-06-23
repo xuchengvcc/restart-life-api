@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
+	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
 
 // RedisConfig Redis配置
@@ -76,6 +77,18 @@ func NewRedisDB(config *RedisConfig) (*RedisDB, error) {
 		Client: client,
 		config: config,
 	}, nil
+}
+
+// InitRedisFromConfig 根据全局配置初始化 Redis 连接
+func InitRedisFromConfig(cfg *config.Config) (*RedisDB, error) {
+	return NewRedisDB(&RedisConfig{
+		Host:         cfg.Redis.Host,
+		Port:         cfg.Redis.Port,
+		Password:     cfg.Redis.Password,
+		Database:     cfg.Redis.Database,
+		PoolSize:     cfg.Redis.PoolSize,
+		MinIdleConns: cfg.Redis.MinIdleConns,
+	})
 }
 
 // HealthCheck 检查Redis连接健康状态

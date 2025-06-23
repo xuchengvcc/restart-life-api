@@ -29,7 +29,12 @@ database:
 logging:
   level: info
   format: json
-  output: stdout
+  output: file
+  file_path: logs/app.log
+  max_size: 100  # MB
+  max_backups: 5
+  max_age: 7  # days
+  compress: true
 
 auth:
   jwt_secret: ${JWT_SECRET}
