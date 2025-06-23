@@ -169,7 +169,7 @@ restart-life-api/
 
 ```sql
 -- 用户账户表
-CREATE TABLE users (
+CREATE TABLE user_tab (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -181,9 +181,9 @@ CREATE TABLE users (
 );
 
 -- 游戏角色表
-CREATE TABLE characters (
+CREATE TABLE character_tab (
     character_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_tab(user_id) ON DELETE CASCADE,
     character_name VARCHAR(100) NOT NULL,
     birth_country VARCHAR(100) NOT NULL,
     birth_year INTEGER NOT NULL CHECK (birth_year BETWEEN 1800 AND 2050),
@@ -198,7 +198,7 @@ CREATE TABLE characters (
 -- 角色属性表
 CREATE TABLE character_attributes (
     attribute_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL REFERENCES characters(character_id) ON DELETE CASCADE,
+    character_id UUID NOT NULL REFERENCES character_tab(character_id) ON DELETE CASCADE,
     intelligence INTEGER NOT NULL DEFAULT 50 CHECK (intelligence BETWEEN 0 AND 100),
     constitution INTEGER NOT NULL DEFAULT 50 CHECK (constitution BETWEEN 0 AND 100),
     charisma INTEGER NOT NULL DEFAULT 50 CHECK (charisma BETWEEN 0 AND 100),
@@ -247,7 +247,7 @@ CREATE TABLE event_choices (
 -- 角色事件历史表
 CREATE TABLE character_events (
     event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id UUID NOT NULL REFERENCES characters(character_id) ON DELETE CASCADE,
+    character_id UUID NOT NULL REFERENCES character_tab(character_id) ON DELETE CASCADE,
     template_id UUID NOT NULL REFERENCES event_templates(template_id),
     event_age INTEGER NOT NULL,
     chosen_option_id UUID REFERENCES event_choices(choice_id),
@@ -1840,7 +1840,7 @@ GET /api/v1/characters/{id}/events
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 用户表
-CREATE TABLE users (
+CREATE TABLE user_tab (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -1852,9 +1852,9 @@ CREATE TABLE users (
 );
 
 -- 角色表
-CREATE TABLE characters (
+CREATE TABLE character_tab (
     character_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_tab(user_id) ON DELETE CASCADE,
     character_name VARCHAR(100) NOT NULL,
     birth_country VARCHAR(100) NOT NULL,
     birth_year INTEGER NOT NULL CHECK (birth_year BETWEEN 1800 AND 2050),
@@ -1867,9 +1867,9 @@ CREATE TABLE characters (
 );
 
 -- 创建索引
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_characters_user_id ON characters(user_id);
+CREATE INDEX idx_users_username ON user_tab(username);
+CREATE INDEX idx_users_email ON user_tab(email);
+CREATE INDEX idx_character_user_id ON character_tab(user_id);
 ```
 
 ### C. Go依赖管理

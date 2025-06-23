@@ -64,8 +64,8 @@ type CachePolicy struct {
 #### 数据库优化
 ```sql
 -- 索引优化
-CREATE INDEX CONCURRENTLY idx_users_username_active ON users(username) WHERE is_active = true;
-CREATE INDEX CONCURRENTLY idx_characters_user_active ON characters(user_id) WHERE is_active = true;
+CREATE INDEX CONCURRENTLY idx_user_username_active ON user_tab(username) WHERE is_active = true;
+CREATE INDEX CONCURRENTLY idx_character_user_active ON character_tab(user_id) WHERE is_active = true;
 CREATE INDEX CONCURRENTLY idx_events_character_age ON events(character_id, age DESC);
 CREATE INDEX CONCURRENTLY idx_relationships_character_type ON relationships(character_id, relation_type);
 
@@ -74,7 +74,7 @@ CREATE TABLE events_2024 PARTITION OF events FOR VALUES FROM ('2024-01-01') TO (
 CREATE TABLE events_2025 PARTITION OF events FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
 
 -- 查询优化
-EXPLAIN ANALYZE SELECT * FROM characters c 
+EXPLAIN ANALYZE SELECT * FROM character_tab c 
 JOIN character_attributes ca ON c.character_id = ca.character_id 
 WHERE c.user_id = $1 AND c.is_active = true;
 ```

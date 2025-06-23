@@ -97,7 +97,7 @@ restart-life-api/
 #### 核心数据表
 ```sql
 -- 用户账户表
-CREATE TABLE users (
+CREATE TABLE user_tab (
     user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -109,9 +109,9 @@ CREATE TABLE users (
 );
 
 -- 游戏角色表
-CREATE TABLE characters (
+CREATE TABLE character_tab (
     character_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_tab(user_id) ON DELETE CASCADE,
     character_name VARCHAR(100) NOT NULL,
     birth_country VARCHAR(100) NOT NULL,
     birth_year INTEGER NOT NULL,

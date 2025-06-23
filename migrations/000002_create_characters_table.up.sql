@@ -1,5 +1,5 @@
 -- 创建游戏角色表
-CREATE TABLE IF NOT EXISTS characters (
+CREATE TABLE IF NOT EXISTS character_tab (
     character_id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id INT UNSIGNED NOT NULL,
     character_name VARCHAR(100) NOT NULL,
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS characters (
     death_cause VARCHAR(200),
     
     -- 外键约束
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES user_tab(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 创建索引
-CREATE INDEX idx_characters_user_id ON characters(user_id);
+CREATE INDEX idx_character_user_id ON character_tab(user_id);
