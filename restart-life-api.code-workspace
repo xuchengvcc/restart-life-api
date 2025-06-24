@@ -1,0 +1,24 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "go.gopath": "",
+        "go.goroot": "",
+        "go.inferGopath": true,
+        "go.useLanguageServer": true,
+        "go.alternateTools": {},
+        "go.languageServerFlags": [
+            "-rpc.trace",
+            "serve",
+            "--debug=localhost:6060"
+        ]
+    },
+    "extensions": {
+        "recommendations": [
+            "golang.go"
+        ]
+    }
+}

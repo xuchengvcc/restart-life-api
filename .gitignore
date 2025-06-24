@@ -46,3 +46,4 @@ logs/
 node_modules/
 dist/
 build/
+server

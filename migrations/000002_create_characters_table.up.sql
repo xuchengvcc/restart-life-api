@@ -49,9 +49,7 @@ CREATE TABLE IF NOT EXISTS character_tab (
     final_age INT,
     death_cause VARCHAR(200),
     
-    -- 外键约束
-    FOREIGN KEY (user_id) REFERENCES user_tab(user_id) ON DELETE CASCADE
+    -- 外键约束和索引
+    FOREIGN KEY (user_id) REFERENCES user_tab(user_id) ON DELETE CASCADE,
+    INDEX idx_character_user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- 创建索引
-CREATE INDEX idx_character_user_id ON character_tab(user_id);

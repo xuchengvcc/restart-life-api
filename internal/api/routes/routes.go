@@ -9,7 +9,7 @@ import (
 )
 
 // SetupRoutes 设置所有路由和中间件
-func SetupRoutes(cfg *config.Config) *gin.Engine {
+func SetupRoutes(cfg *config.Config, container Container) *gin.Engine {
 	// 设置Gin模式
 	gin.SetMode(cfg.Server.Mode)
 
@@ -23,7 +23,7 @@ func SetupRoutes(cfg *config.Config) *gin.Engine {
 	handlers.RegisterHealthRoutes(r, "v0.1.0")
 
 	// 注册API路由
-	setupAPIRoutes(r, cfg)
+	setupAPIRoutes(r, cfg, container)
 
 	logrus.Info("All routes setup completed")
 	return r
@@ -54,23 +54,36 @@ func setupMiddleware(r *gin.Engine, cfg *config.Config) {
 }
 
 // setupAPIRoutes 设置API路由
-func setupAPIRoutes(r *gin.Engine, cfg *config.Config) {
+func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
+	// 获取处理器和中间件
+	authHandler := container.GetAuthHandler()
+	authMiddleware := container.GetAuthMiddleware()
+
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
 	{
 		// 认证相关路由
 		auth := v1.Group("/auth")
 		{
-			// TODO: 添加认证路由
-			auth.POST("/register", placeholderHandler("register"))
-			auth.POST("/login", placeholderHandler("login"))
-			auth.POST("/logout", placeholderHandler("logout"))
-			auth.POST("/refresh", placeholderHandler("refresh"))
-			auth.GET("/profile", placeholderHandler("profile"))
+			// 公开路由（不需要认证）
+			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+			auth.POST("/refresh", authHandler.RefreshToken)
+			
+			// 需要认证的路由
+			authProtected := auth.Group("")
+			authProtected.Use(authMiddleware.RequireAuth())
+			{
+				authProtected.POST("/logout", authHandler.Logout)
+				authProtected.GET("/profile", authHandler.GetProfile)
+				authProtected.PUT("/profile", authHandler.UpdateProfile)
+				authProtected.POST("/change-password", authHandler.ChangePassword)
+			}
 		}
 
-		// 角色相关路由
+		// 角色相关路由（需要认证）
 		characters := v1.Group("/characters")
+		characters.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加角色路由
 			characters.POST("", placeholderHandler("create character"))
@@ -80,8 +93,9 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config) {
 			characters.DELETE("/:id", placeholderHandler("delete character"))
 		}
 
-		// 游戏相关路由
+		// 游戏相关路由（需要认证）
 		game := v1.Group("/game")
+		game.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加游戏路由
 			game.POST("/start/:character_id", placeholderHandler("start game"))
@@ -90,24 +104,27 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config) {
 			game.POST("/decision/:character_id", placeholderHandler("make decision"))
 		}
 
-		// 成就相关路由
+		// 成就相关路由（需要认证）
 		achievements := v1.Group("/achievements")
+		achievements.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加成就路由
 			achievements.GET("/:character_id", placeholderHandler("get achievements"))
 			achievements.GET("/categories", placeholderHandler("get achievement categories"))
 		}
 
-		// 关系相关路由
+		// 关系相关路由（需要认证）
 		relationships := v1.Group("/relationships")
+		relationships.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加关系路由
 			relationships.GET("/:character_id", placeholderHandler("get relationships"))
 			relationships.POST("/:character_id", placeholderHandler("create relationship"))
 		}
 
-		// 统计相关路由
+		// 统计相关路由（需要认证）
 		stats := v1.Group("/stats")
+		stats.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加统计路由
 			stats.GET("/:character_id", placeholderHandler("get character stats"))

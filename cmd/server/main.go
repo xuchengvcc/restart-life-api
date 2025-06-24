@@ -41,8 +41,12 @@ func main() {
 	defer redisClient.Client.Close()
 	logrus.Info("Redis connected successfully")
 
+	// 初始化依赖注入容器
+	container := NewContainer(cfg, db.DB, redisClient.Client)
+	logrus.Info("Dependency injection container initialized")
+
 	// 设置路由
-	r := routes.SetupRoutes(cfg)
+	r := routes.SetupRoutes(cfg, container)
 
 	// 在开发环境下添加测试路由
 	routes.SetupTestRoutes(r)

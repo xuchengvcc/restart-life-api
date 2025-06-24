@@ -5,13 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/gin-gonic/gin"
-)
-
-const (
-	// RequestIDHeader 请求ID头部名称
-	RequestIDHeader = "X-Request-ID"
-	// RequestIDKey 在gin.Context中存储请求ID的键
-	RequestIDKey = "request_id"
+	"github.com/xuchengvcc/restart-life-api/internal/constants"
 )
 
 // RequestIDConfig 请求ID中间件配置
@@ -24,8 +18,8 @@ type RequestIDConfig struct {
 // DefaultRequestIDConfig 默认请求ID配置
 func DefaultRequestIDConfig() RequestIDConfig {
 	return RequestIDConfig{
-		HeaderName: RequestIDHeader,
-		ContextKey: RequestIDKey,
+		HeaderName: constants.HeaderRequestID,
+		ContextKey: constants.ContextKeyRequestID,
 		Generator:  generateRequestID,
 	}
 }
@@ -70,7 +64,7 @@ func generateTimeBasedID() string {
 
 // GetRequestID 从gin.Context中获取请求ID
 func GetRequestID(c *gin.Context) string {
-	if requestID, exists := c.Get(RequestIDKey); exists {
+	if requestID, exists := c.Get(constants.ContextKeyRequestID); exists {
 		if id, ok := requestID.(string); ok {
 			return id
 		}

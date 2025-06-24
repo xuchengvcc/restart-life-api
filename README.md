@@ -121,3 +121,17 @@ scripts\stop.bat
 ## 📄 许可证
 
 MIT License
+
+## ✨ 已完成功能
+
+### 🔐 用户认证系统 (v0.2.0)
+- ✅ 用户注册/登录
+- ✅ JWT Token认证 
+- ✅ 访问Token和刷新Token
+- ✅ 密码安全加密（bcrypt）
+- ✅ 用户信息管理
+- ✅ 密码修改
+- ✅ 多平台登录支持（用户名/邮箱）
+- ✅ Token中间件保护
+
+详细文档: [认证系统说明](docs/auth_system.md)

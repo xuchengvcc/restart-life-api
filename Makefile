@@ -67,6 +67,21 @@ test: ## Run tests
 	@echo "Running tests..."
 	$(GOTEST) -v -race -coverprofile=coverage.out ./...
 
+test-auth: ## Test authentication system
+	@echo "Running authentication unit tests..."
+	cd cmd/server && $(GOTEST) -v -run "Test.*" .
+	@echo "Authentication tests completed"
+
+test-auth-api: ## Test authentication API endpoints
+	@echo "Testing authentication API endpoints..."
+	@if [ ! -f "./scripts/test_auth_api.sh" ]; then \
+		echo "Error: test_auth_api.sh not found"; \
+		exit 1; \
+	fi
+	@chmod +x ./scripts/test_auth_api.sh
+	@./scripts/test_auth_api.sh
+	@echo "API tests completed"
+
 test-coverage: test ## Run tests with coverage report
 	@echo "Generating coverage report..."
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
@@ -179,4 +194,4 @@ install: build ## Install the application
 	cp $(BINARY_PATH) /usr/local/bin/
 	@echo "Installation completed!"
 
-.DEFAULT_GOAL := help 
+.DEFAULT_GOAL := help
