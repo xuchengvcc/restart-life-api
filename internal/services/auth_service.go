@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -52,27 +51,27 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 	exists, err := s.userRepo.ExistsByUsername(ctx, req.Username)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to check username exists")
-		return nil, fmt.Errorf(constants.MsgInternalError)
+		return nil, constants.ErrInternalError
 	}
 	if exists {
-		return nil, fmt.Errorf(constants.MsgUserAlreadyExists)
+		return nil, constants.ErrUserAlreadyExists
 	}
 
 	// 检查邮箱是否已存在
 	exists, err = s.userRepo.ExistsByEmail(ctx, req.Email)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to check email exists")
-		return nil, fmt.Errorf(constants.MsgInternalError)
+		return nil, constants.ErrInternalError
 	}
 	if exists {
-		return nil, fmt.Errorf("email already exists")
+		return nil, constants.ErrEmailAlreadyExists
 	}
 
 	// 生成密码哈希
 	passwordHash, err := s.passwordManager.HashPassword(req.Password)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to hash password")
-		return nil, fmt.Errorf("failed to process password")
+		return nil, constants.ErrPasswordProcessFailed
 	}
 
 	// 创建用户
@@ -86,14 +85,14 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 	err = s.userRepo.Create(ctx, user)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to create user")
-		return nil, fmt.Errorf("failed to create user")
+		return nil, constants.ErrUserCreateFailed
 	}
 
 	// 生成Token
 	accessToken, refreshToken, expiresAt, err := s.jwtManager.GenerateTokenPair(user)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to generate tokens")
-		return nil, fmt.Errorf("failed to generate tokens")
+		return nil, constants.ErrTokenGenerateFailed
 	}
 
 	// 更新最后登录时间
@@ -136,7 +135,7 @@ func (s *authService) Login(ctx context.Context, req *models.LoginRequest) (*mod
 			"login_field":           loginField,
 			constants.LogFieldError: err.Error(),
 		}).Warn("User login failed - user not found")
-		return nil, fmt.Errorf(constants.MsgInvalidCredentials)
+		return nil, constants.ErrInvalidCredentials
 	}
 
 	// 检查用户是否激活
@@ -145,7 +144,7 @@ func (s *authService) Login(ctx context.Context, req *models.LoginRequest) (*mod
 			constants.LogFieldUserID:   user.UserID,
 			constants.LogFieldUsername: user.Username,
 		}).Warn("User login failed - account disabled")
-		return nil, fmt.Errorf(constants.MsgAccountDisabled)
+		return nil, constants.ErrAccountDisabled
 	}
 
 	// 验证密码
@@ -155,14 +154,14 @@ func (s *authService) Login(ctx context.Context, req *models.LoginRequest) (*mod
 			constants.LogFieldUserID:   user.UserID,
 			constants.LogFieldUsername: user.Username,
 		}).Warn("User login failed - invalid password")
-		return nil, fmt.Errorf(constants.MsgInvalidCredentials)
+		return nil, constants.ErrInvalidCredentials
 	}
 
 	// 生成Token
 	accessToken, refreshToken, expiresAt, err := s.jwtManager.GenerateTokenPair(user)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to generate tokens")
-		return nil, fmt.Errorf("failed to generate tokens")
+		return nil, constants.ErrTokenGenerateFailed
 	}
 
 	// 更新最后登录时间
@@ -190,21 +189,21 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*m
 	accessToken, newRefreshToken, expiresAt, err := s.jwtManager.RefreshToken(refreshToken)
 	if err != nil {
 		s.logger.WithError(err).Warn("Failed to refresh token")
-		return nil, fmt.Errorf("invalid refresh token")
+		return nil, constants.ErrInvalidRefreshToken
 	}
 
 	// 验证Token并获取用户信息
 	claims, err := s.jwtManager.ValidateToken(accessToken)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to validate new access token")
-		return nil, fmt.Errorf("failed to generate new token")
+		return nil, constants.ErrTokenGenerateFailed
 	}
 
 	// 获取完整的用户信息
 	user, err := s.userRepo.GetByID(ctx, claims.UserID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get user for refresh token")
-		return nil, fmt.Errorf("user not found")
+		return nil, constants.ErrUserNotFound
 	}
 
 	return &models.AuthResponse{
@@ -220,7 +219,7 @@ func (s *authService) GetProfile(ctx context.Context, userID uint) (*models.User
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get user profile")
-		return nil, fmt.Errorf("user not found")
+		return nil, constants.ErrUserNotFound
 	}
 
 	return user, nil
@@ -231,7 +230,7 @@ func (s *authService) UpdateProfile(ctx context.Context, userID uint, req *model
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get user for profile update")
-		return nil, fmt.Errorf("user not found")
+		return nil, constants.ErrUserNotFound
 	}
 
 	// 更新用户信息
@@ -254,7 +253,7 @@ func (s *authService) UpdateProfile(ctx context.Context, userID uint, req *model
 	err = s.userRepo.Update(ctx, user)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to update user profile")
-		return nil, fmt.Errorf("failed to update profile")
+		return nil, constants.ErrProfileUpdateFailed
 	}
 
 	s.logger.WithFields(logrus.Fields{
@@ -270,7 +269,7 @@ func (s *authService) ChangePassword(ctx context.Context, userID uint, req *mode
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to get user for password change")
-		return fmt.Errorf("user not found")
+		return constants.ErrUserNotFound
 	}
 
 	// 验证旧密码
@@ -280,14 +279,14 @@ func (s *authService) ChangePassword(ctx context.Context, userID uint, req *mode
 			constants.LogFieldUserID:   user.UserID,
 			constants.LogFieldUsername: user.Username,
 		}).Warn("Password change failed - invalid old password")
-		return fmt.Errorf(constants.MsgPasswordIncorrect)
+		return constants.ErrPasswordIncorrect
 	}
 
 	// 生成新密码哈希
 	newPasswordHash, err := s.passwordManager.HashPassword(req.NewPassword)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to hash new password")
-		return fmt.Errorf("failed to process new password")
+		return constants.ErrPasswordProcessFailed
 	}
 
 	// 更新密码
@@ -295,7 +294,7 @@ func (s *authService) ChangePassword(ctx context.Context, userID uint, req *mode
 	err = s.userRepo.Update(ctx, user)
 	if err != nil {
 		s.logger.WithError(err).Error("Failed to update password")
-		return fmt.Errorf("failed to update password")
+		return constants.ErrUserUpdateFailed
 	}
 
 	s.logger.WithFields(logrus.Fields{
@@ -310,22 +309,22 @@ func (s *authService) ChangePassword(ctx context.Context, userID uint, req *mode
 func (s *authService) ValidateToken(ctx context.Context, token string) (*utils.Claims, error) {
 	claims, err := s.jwtManager.ValidateToken(token)
 	if err != nil {
-		return nil, fmt.Errorf("invalid token: %w", err)
+		return nil, constants.ErrTokenInvalid
 	}
 
 	// 检查Token类型
 	if claims.Type != constants.TokenTypeAccess {
-		return nil, fmt.Errorf("token is not an access token")
+		return nil, constants.ErrNotAccessToken
 	}
 
 	// 验证用户是否仍然存在且激活
 	user, err := s.userRepo.GetByID(ctx, claims.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("user not found")
+		return nil, constants.ErrUserNotFound
 	}
 
 	if !user.IsActive {
-		return nil, fmt.Errorf("account is disabled")
+		return nil, constants.ErrAccountDisabled
 	}
 
 	return claims, nil

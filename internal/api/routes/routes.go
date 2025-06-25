@@ -76,7 +76,7 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			{
 				authProtected.POST("/logout", authHandler.Logout)
 				authProtected.GET("/profile", authHandler.GetProfile)
-				authProtected.PUT("/profile", authHandler.UpdateProfile)
+				authProtected.PUT("/update_profile", authHandler.UpdateProfile)
 				authProtected.POST("/change-password", authHandler.ChangePassword)
 			}
 		}

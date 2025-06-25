@@ -3,8 +3,8 @@ package dao
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
+	"github.com/xuchengvcc/restart-life-api/internal/constants"
 	"github.com/xuchengvcc/restart-life-api/internal/models"
 )
 
@@ -42,12 +42,12 @@ func (d *userDAO) Insert(ctx context.Context, user *models.User) error {
 		user.Username, user.Email, user.PasswordHash,
 		user.CreatedAt, user.UpdatedAt, user.IsActive)
 	if err != nil {
-		return fmt.Errorf("failed to insert user: %w", err)
+		return constants.ErrDAOInsertFailed
 	}
 
 	lastID, err := result.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("failed to get last insert id: %w", err)
+		return constants.ErrDAOGetIDFailed
 	}
 
 	user.UserID = uint(lastID)
@@ -72,9 +72,9 @@ func (d *userDAO) SelectByID(ctx context.Context, userID uint) (*models.User, er
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found")
+			return nil, constants.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to select user by id: %w", err)
+		return nil, constants.ErrDAOSelectFailed
 	}
 
 	return user, nil
@@ -98,9 +98,9 @@ func (d *userDAO) SelectByUsername(ctx context.Context, username string) (*model
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found")
+			return nil, constants.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to select user by username: %w", err)
+		return nil, constants.ErrDAOSelectFailed
 	}
 
 	return user, nil
@@ -124,9 +124,9 @@ func (d *userDAO) SelectByEmail(ctx context.Context, email string) (*models.User
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("user not found")
+			return nil, constants.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("failed to select user by email: %w", err)
+		return nil, constants.ErrDAOSelectFailed
 	}
 
 	return user, nil
@@ -148,7 +148,7 @@ func (d *userDAO) Update(ctx context.Context, user *models.User) error {
 		user.BirthDate, user.Gender, user.Country, user.UserID)
 
 	if err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
+		return constants.ErrDAOUpdateFailed
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func (d *userDAO) UpdateLastLogin(ctx context.Context, userID uint, lastLogin in
 
 	_, err := d.db.ExecContext(ctx, query, lastLogin, userID)
 	if err != nil {
-		return fmt.Errorf("failed to update last login: %w", err)
+		return constants.ErrDAOUpdateFailed
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func (d *userDAO) Delete(ctx context.Context, userID uint) error {
 
 	_, err := d.db.ExecContext(ctx, query, userID)
 	if err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
+		return constants.ErrDAODeleteFailed
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func (d *userDAO) CountByUsername(ctx context.Context, username string) (int, er
 
 	err := d.db.QueryRowContext(ctx, query, username).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count by username: %w", err)
+		return 0, constants.ErrDAOCountFailed
 	}
 
 	return count, nil
@@ -198,7 +198,7 @@ func (d *userDAO) CountByEmail(ctx context.Context, email string) (int, error) {
 
 	err := d.db.QueryRowContext(ctx, query, email).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count by email: %w", err)
+		return 0, constants.ErrDAOCountFailed
 	}
 
 	return count, nil

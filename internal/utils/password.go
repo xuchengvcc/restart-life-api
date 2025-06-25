@@ -2,11 +2,10 @@ package utils
 
 import (
 	"crypto/rand"
-	"fmt"
 	"unicode"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/xuchengvcc/restart-life-api/internal/constants"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // PasswordManager 密码管理器
@@ -36,7 +35,7 @@ func (pm *PasswordManager) HashPassword(password string) (string, error) {
 	// 生成哈希
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), pm.cost)
 	if err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
+		return "", constants.ErrPasswordHashFailed
 	}
 
 	return string(hashedBytes), nil
@@ -50,11 +49,11 @@ func (pm *PasswordManager) VerifyPassword(hashedPassword, password string) error
 // ValidatePassword 验证密码强度
 func (pm *PasswordManager) ValidatePassword(password string) error {
 	if len(password) < constants.MinPasswordLength {
-		return fmt.Errorf("password must be at least %d characters long", constants.MinPasswordLength)
+		return constants.ErrPasswordTooShort
 	}
 
 	if len(password) > constants.MaxPasswordLength {
-		return fmt.Errorf("password must not exceed %d characters", constants.MaxPasswordLength)
+		return constants.ErrPasswordTooLong
 	}
 
 	// 检查是否包含可见字符
@@ -67,7 +66,7 @@ func (pm *PasswordManager) ValidatePassword(password string) error {
 	}
 
 	if !hasVisible {
-		return fmt.Errorf("password must contain visible characters")
+		return constants.ErrPasswordNoVisible
 	}
 
 	return nil
@@ -88,7 +87,7 @@ func (pm *PasswordManager) GenerateRandomPassword(length int) (string, error) {
 	// 生成随机字节
 	bytes := make([]byte, length)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+		return "", constants.ErrPasswordGenFailed
 	}
 
 	// 转换为字符

@@ -1,5 +1,7 @@
 package constants
 
+import "errors"
+
 // 错误代码常量
 const (
 	// 认证相关错误代码 (1xxx)
@@ -34,6 +36,7 @@ const (
 	MsgInvalidCredentials = "invalid credentials"
 	MsgUserNotFound       = "user not found"
 	MsgUserAlreadyExists  = "user already exists"
+	MsgEmailAlreadyExists = "email already exists"
 	MsgTokenExpired       = "token expired"
 	MsgTokenInvalid       = "invalid token"
 	MsgPermissionDenied   = "permission denied"
@@ -43,4 +46,103 @@ const (
 	MsgPasswordIncorrect  = "old password is incorrect"
 	MsgResourceNotFound   = "resource not found"
 	MsgDuplicateResource  = "resource already exists"
+
+	// 密码相关
+	MsgPasswordProcessFailed = "failed to process password"
+	MsgPasswordHashFailed    = "failed to hash password"
+	MsgPasswordVerifyFailed  = "failed to verify password"
+
+	// 用户操作相关
+	MsgUserCreateFailed    = "failed to create user"
+	MsgUserUpdateFailed    = "failed to update user"
+	MsgUserDeleteFailed    = "failed to delete user"
+	MsgProfileUpdateFailed = "failed to update profile"
+
+	// Token相关
+	MsgTokenGenerateFailed = "failed to generate tokens"
+	MsgTokenRefreshFailed  = "failed to refresh token"
+	MsgInvalidRefreshToken = "invalid refresh token"
+	MsgInvalidAccessToken  = "invalid access token"
+	MsgNotAccessToken      = "token is not an access token"
+
+	// 数据库相关
+	MsgDatabaseError       = "database operation failed"
+	MsgRecordNotFound      = "record not found"
+	MsgDuplicateEntry      = "duplicate entry"
+	MsgConstraintViolation = "constraint violation"
+
+	// 密码验证相关
+	MsgPasswordTooShort  = "password too short"
+	MsgPasswordTooLong   = "password too long"
+	MsgPasswordNoVisible = "password must contain visible characters"
+	MsgPasswordGenFailed = "failed to generate password"
+
+	// DAO相关错误
+	MsgDAOInsertFailed = "failed to insert record"
+	MsgDAOUpdateFailed = "failed to update record"
+	MsgDAODeleteFailed = "failed to delete record"
+	MsgDAOSelectFailed = "failed to select record"
+	MsgDAOCountFailed  = "failed to count records"
+	MsgDAOGetIDFailed  = "failed to get last insert id"
+
+	// JWT相关错误
+	MsgJWTGenerateFailed = "failed to generate jwt token"
+	MsgJWTInvalidMethod  = "unexpected signing method"
+	MsgJWTParseError     = "failed to parse token"
+	MsgJWTInvalidToken   = "invalid token"
+	MsgJWTInvalidClaims  = "invalid token claims"
+)
+
+// 预定义错误变量 - 用于 errors.Is 判断
+var (
+	// 认证相关错误
+	ErrInvalidCredentials = errors.New(MsgInvalidCredentials)
+	ErrUserNotFound       = errors.New(MsgUserNotFound)
+	ErrUserAlreadyExists  = errors.New(MsgUserAlreadyExists)
+	ErrEmailAlreadyExists = errors.New(MsgEmailAlreadyExists)
+	ErrTokenExpired       = errors.New(MsgTokenExpired)
+	ErrTokenInvalid       = errors.New(MsgTokenInvalid)
+	ErrAccountDisabled    = errors.New(MsgAccountDisabled)
+	ErrPasswordIncorrect  = errors.New(MsgPasswordIncorrect)
+
+	// 密码相关错误
+	ErrPasswordProcessFailed = errors.New(MsgPasswordProcessFailed)
+	ErrPasswordHashFailed    = errors.New(MsgPasswordHashFailed)
+	ErrPasswordVerifyFailed  = errors.New(MsgPasswordVerifyFailed)
+
+	// 用户操作相关错误
+	ErrUserCreateFailed    = errors.New(MsgUserCreateFailed)
+	ErrUserUpdateFailed    = errors.New(MsgUserUpdateFailed)
+	ErrProfileUpdateFailed = errors.New(MsgProfileUpdateFailed)
+
+	// Token相关错误
+	ErrTokenGenerateFailed = errors.New(MsgTokenGenerateFailed)
+	ErrInvalidRefreshToken = errors.New(MsgInvalidRefreshToken)
+	ErrNotAccessToken      = errors.New(MsgNotAccessToken)
+
+	// 业务相关错误
+	ErrValidationFailed = errors.New(MsgValidationFailed)
+	ErrInternalError    = errors.New(MsgInternalError)
+	ErrPermissionDenied = errors.New(MsgPermissionDenied)
+
+	// 密码验证错误
+	ErrPasswordTooShort  = errors.New(MsgPasswordTooShort)
+	ErrPasswordTooLong   = errors.New(MsgPasswordTooLong)
+	ErrPasswordNoVisible = errors.New(MsgPasswordNoVisible)
+	ErrPasswordGenFailed = errors.New(MsgPasswordGenFailed)
+
+	// DAO相关错误
+	ErrDAOInsertFailed = errors.New(MsgDAOInsertFailed)
+	ErrDAOUpdateFailed = errors.New(MsgDAOUpdateFailed)
+	ErrDAODeleteFailed = errors.New(MsgDAODeleteFailed)
+	ErrDAOSelectFailed = errors.New(MsgDAOSelectFailed)
+	ErrDAOCountFailed  = errors.New(MsgDAOCountFailed)
+	ErrDAOGetIDFailed  = errors.New(MsgDAOGetIDFailed)
+
+	// JWT相关错误
+	ErrJWTGenerateFailed = errors.New(MsgJWTGenerateFailed)
+	ErrJWTInvalidMethod  = errors.New(MsgJWTInvalidMethod)
+	ErrJWTParseError     = errors.New(MsgJWTParseError)
+	ErrJWTInvalidToken   = errors.New(MsgJWTInvalidToken)
+	ErrJWTInvalidClaims  = errors.New(MsgJWTInvalidClaims)
 )

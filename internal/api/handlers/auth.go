@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/xuchengvcc/restart-life-api/internal/api/middleware"
+	"github.com/xuchengvcc/restart-life-api/internal/constants"
 	"github.com/xuchengvcc/restart-life-api/internal/models"
 	"github.com/xuchengvcc/restart-life-api/internal/services"
 )
@@ -53,11 +55,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	authResponse, err := h.authService.Register(c.Request.Context(), &req)
 	if err != nil {
-		// 根据错误类型返回不同的状态码
-		if strings.Contains(err.Error(), "already exists") {
+		// 使用 errors.Is 判断错误类型
+		if errors.Is(err, constants.ErrUserAlreadyExists) || errors.Is(err, constants.ErrEmailAlreadyExists) {
 			response := models.NewErrorResponse(models.ErrCodeUserAlreadyExists, err.Error())
 			c.JSON(http.StatusConflict, response)
-		} else if strings.Contains(err.Error(), "password") {
+		} else if errors.Is(err, constants.ErrPasswordProcessFailed) {
 			response := models.NewErrorResponse(models.ErrCodeValidationFailed, err.Error())
 			c.JSON(http.StatusBadRequest, response)
 		} else {
@@ -96,10 +98,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	authResponse, err := h.authService.Login(c.Request.Context(), &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "invalid credentials") {
+		if errors.Is(err, constants.ErrInvalidCredentials) {
 			response := models.NewErrorResponse(models.ErrCodeInvalidCredentials, "用户名或密码错误")
 			c.JSON(http.StatusUnauthorized, response)
-		} else if strings.Contains(err.Error(), "disabled") {
+		} else if errors.Is(err, constants.ErrAccountDisabled) {
 			response := models.NewErrorResponse(models.ErrCodePermissionDenied, "账户已被禁用")
 			c.JSON(http.StatusUnauthorized, response)
 		} else {
@@ -224,7 +226,7 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 
 	user, err := h.authService.UpdateProfile(c.Request.Context(), userID, &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if errors.Is(err, constants.ErrUserNotFound) {
 			response := models.NewErrorResponse(models.ErrCodeUserNotFound, "用户不存在")
 			c.JSON(http.StatusNotFound, response)
 		} else {
@@ -265,13 +267,13 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 
 	err := h.authService.ChangePassword(c.Request.Context(), userID, &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if errors.Is(err, constants.ErrUserNotFound) {
 			response := models.NewErrorResponse(models.ErrCodeUserNotFound, "用户不存在")
 			c.JSON(http.StatusNotFound, response)
-		} else if strings.Contains(err.Error(), "incorrect") {
+		} else if errors.Is(err, constants.ErrPasswordIncorrect) {
 			response := models.NewErrorResponse(models.ErrCodeInvalidCredentials, "原密码错误")
 			c.JSON(http.StatusBadRequest, response)
-		} else if strings.Contains(err.Error(), "password") {
+		} else if errors.Is(err, constants.ErrPasswordProcessFailed) {
 			response := models.NewErrorResponse(models.ErrCodeValidationFailed, err.Error())
 			c.JSON(http.StatusBadRequest, response)
 		} else {
