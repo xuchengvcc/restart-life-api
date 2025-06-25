@@ -23,7 +23,7 @@ Content-Type: application/json
 
 {
     "username": "testuser",
-    "email": "test@example.com", 
+    "email": "test@example.com",
     "password": "password123"
 }
 ```
@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS user_tab (
 
 ## 配置说明
 
-在 `configs/development.yaml` 中配置认证相关参数：
+在 `configs/test.yaml` 中配置认证相关参数：
 
 ```yaml
 auth:
@@ -233,7 +233,7 @@ req := LoginRequest{
 
 // 发送登录请求
 jsonData, _ := json.Marshal(req)
-resp, err := http.Post("http://localhost:8080/api/v1/auth/login", 
+resp, err := http.Post("http://localhost:8080/api/v1/auth/login",
     "application/json", bytes.NewBuffer(jsonData))
 
 // 解析响应获取Token
@@ -256,7 +256,7 @@ accessToken := authResponse.Data.AccessToken
 ## 下一步开发
 
 - [ ] 邮箱验证功能
-- [ ] 忘记密码功能  
+- [ ] 忘记密码功能
 - [ ] 第三方登录（OAuth2）
 - [ ] 多设备登录管理
 - [ ] 登录日志记录

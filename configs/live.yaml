@@ -10,7 +10,7 @@ database:
   mysql:
     host: localhost
     port: 3306
-    database: restart_life_live_db
+    database: your_database_name
     username: root
     password: password
     charset: utf8mb4

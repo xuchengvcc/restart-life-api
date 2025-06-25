@@ -63,11 +63,11 @@ func loadConfig() (*config.Config, error) {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		// 默认配置文件路径
-		configPath = "configs/development.yaml"
+		configPath = "configs/docker.yaml"
 		if os.Getenv("CONFIG_ENV") == "live" {
 			configPath = "configs/live.yaml"
 		} else if os.Getenv("CONFIG_ENV") == "test" {
-			configPath = "configs/live.yaml"
+			configPath = "configs/test.yaml"
 		}
 	}
 

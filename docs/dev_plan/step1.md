@@ -209,7 +209,7 @@ GET /metrics     - 基础指标信息
 ### 完成情况
 - **总体进度**: 100% ✅
 - **任务1**: 项目初始化与基础配置 ✅
-- **任务2**: 数据库设计与连接 ✅  
+- **任务2**: 数据库设计与连接 ✅
 - **任务3**: 基础服务框架 ✅
 
 ### 主要成果
@@ -230,7 +230,7 @@ GET /metrics     - 基础指标信息
 ### 下一步计划
 准备进入 **Step 2: 核心业务模块开发**，重点实现：
 - 用户认证系统
-- 角色管理模块  
+- 角色管理模块
 - 游戏核心逻辑
 - API文档完善
 - 单元测试补充
@@ -260,11 +260,11 @@ GET /metrics     - 基础指标信息
 
 ### 配置规范
 ```yaml
-# config/development.yaml
+# config/test.yaml
 server:
   port: 8080
   mode: debug
-  
+
 database:
   mysql:
     host: localhost
@@ -273,7 +273,7 @@ database:
     username: root
     password: password
     sslmode: disable
-    
+
   redis:
     host: localhost
     port: 6379
@@ -287,7 +287,7 @@ database:
 
 完成Step 1后，将进入Step 2：核心业务模块开发 (v0.2.x)
 - 用户认证系统
-- 角色管理系统  
+- 角色管理系统
 - 游戏核心逻辑
 
 ---
