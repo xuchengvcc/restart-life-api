@@ -15,6 +15,7 @@ const (
 	ErrCodeInternalError     = 2002
 	ErrCodeResourceNotFound  = 2003
 	ErrCodeDuplicateResource = 2004
+	ErrCodeInvalidParameter  = 2005
 
 	// 角色相关错误代码 (3xxx)
 	ErrCodeCharacterNotFound     = 3001
@@ -29,17 +30,17 @@ const (
 
 // 响应消息常量
 const (
-	MsgSuccess             = "success"
-	MsgInvalidCredentials  = "invalid credentials"
-	MsgUserNotFound        = "user not found"
-	MsgUserAlreadyExists   = "user already exists"
-	MsgTokenExpired        = "token expired"
-	MsgTokenInvalid        = "invalid token"
-	MsgPermissionDenied    = "permission denied"
-	MsgValidationFailed    = "validation failed"
-	MsgInternalError       = "internal server error"
-	MsgAccountDisabled     = "account is disabled"
-	MsgPasswordIncorrect   = "old password is incorrect"
-	MsgResourceNotFound    = "resource not found"
-	MsgDuplicateResource   = "resource already exists"
+	MsgSuccess            = "success"
+	MsgInvalidCredentials = "invalid credentials"
+	MsgUserNotFound       = "user not found"
+	MsgUserAlreadyExists  = "user already exists"
+	MsgTokenExpired       = "token expired"
+	MsgTokenInvalid       = "invalid token"
+	MsgPermissionDenied   = "permission denied"
+	MsgValidationFailed   = "validation failed"
+	MsgInternalError      = "internal server error"
+	MsgAccountDisabled    = "account is disabled"
+	MsgPasswordIncorrect  = "old password is incorrect"
+	MsgResourceNotFound   = "resource not found"
+	MsgDuplicateResource  = "resource already exists"
 )

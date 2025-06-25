@@ -4,6 +4,7 @@ server:
   read_timeout: 30s
   write_timeout: 30s
   idle_timeout: 120s
+  version: 0.1.0
 
 database:
   mysql:
@@ -61,3 +62,14 @@ rate_limit:
   enabled: true
   requests_per_minute: 100
   burst: 50
+
+ai:
+  providers:
+    - name: gemini
+      api_key: your-gemini-api-key
+      model_ids:
+        - gemini-2.0-flash-lite
+    - name: huanyuan
+      api_key: your-huanyuan-api-key
+      model_ids:
+        - hunyuan-lite

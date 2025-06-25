@@ -52,3 +52,14 @@ cors:
   allow_headers:
     - "*"
   allow_credentials: true
+
+ai:
+  providers:
+    - name: gemini
+      api_key: your-gemini-api-key
+      model_ids:
+        - gemini-2.0-flash-lite
+    - name: huanyuan
+      api_key: your-huanyuan-api-key
+      model_ids:
+        - hunyuan-lite

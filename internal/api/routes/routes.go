@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/xuchengvcc/restart-life-api/internal/api/handlers"
 	"github.com/xuchengvcc/restart-life-api/internal/api/middleware"
 	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
@@ -20,7 +19,7 @@ func SetupRoutes(cfg *config.Config, container Container) *gin.Engine {
 	setupMiddleware(r, cfg)
 
 	// 注册健康检查路由
-	handlers.RegisterHealthRoutes(r, "v0.1.0")
+	setupHealthRoutes(r, container)
 
 	// 注册API路由
 	setupAPIRoutes(r, cfg, container)
@@ -58,6 +57,7 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 	// 获取处理器和中间件
 	authHandler := container.GetAuthHandler()
 	authMiddleware := container.GetAuthMiddleware()
+	aiHandler := container.GetAIHandler()
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
@@ -69,7 +69,7 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
-			
+
 			// 需要认证的路由
 			authProtected := auth.Group("")
 			authProtected.Use(authMiddleware.RequireAuth())
@@ -130,9 +130,26 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			stats.GET("/:character_id", placeholderHandler("get character stats"))
 			stats.GET("/:character_id/timeline", placeholderHandler("get timeline"))
 		}
+
+		ai := v1.Group("/ai")
+		{
+			ai.POST("/generate", aiHandler.Generate)
+		}
 	}
 
 	logrus.Info("API routes setup completed")
+}
+
+func setupHealthRoutes(r *gin.Engine, container Container) {
+	healthHandler := container.GetHealthHandler()
+
+	r.GET("/health", healthHandler.Health)
+	r.GET("/ping", healthHandler.Ping)
+	r.GET("/ready", healthHandler.Ready)
+	r.GET("/version", healthHandler.Version)
+	r.GET("/metrics", healthHandler.Metrics)
+
+	logrus.Info("Health check routes setup completed")
 }
 
 // placeholderHandler 占位符处理器，用于未实现的路由

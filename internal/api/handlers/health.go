@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 // HealthHandler 健康检查处理器
@@ -198,18 +197,4 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, metrics)
-}
-
-// RegisterHealthRoutes 注册健康检查路由
-func RegisterHealthRoutes(r *gin.Engine, version string) {
-	handler := NewHealthHandler(version)
-
-	// 健康检查路由
-	r.GET("/health", handler.Health)
-	r.GET("/ping", handler.Ping)
-	r.GET("/ready", handler.Ready)
-	r.GET("/version", handler.Version)
-	r.GET("/metrics", handler.Metrics)
-
-	logrus.Info("Health check routes registered")
 }

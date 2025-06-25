@@ -7,6 +7,8 @@ import (
 
 // Container 依赖注入容器接口
 type Container interface {
-	GetAuthHandler() *handlers.AuthHandler
 	GetAuthMiddleware() *middleware.AuthMiddleware
+	GetAuthHandler() *handlers.AuthHandler
+	GetAIHandler() *handlers.AIHandler
+	GetHealthHandler() *handlers.HealthHandler
 }

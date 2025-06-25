@@ -21,6 +21,8 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to load configuration")
 	}
+	// config的其他初始化
+	cfg.PostInit()
 
 	// 初始化日志
 	initLogger(cfg)
