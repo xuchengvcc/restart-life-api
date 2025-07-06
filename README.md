@@ -6,7 +6,7 @@
 
 《重启人生》是一款文字模拟人生游戏的后端API服务，提供：
 - 用户认证和角色管理
-- 游戏逻辑和事件处理  
+- 游戏逻辑和事件处理
 - 数据持久化和缓存
 - 多平台客户端支持
 
@@ -70,10 +70,18 @@ ENV_FILE=../.env.live docker-compose -f docker/docker-compose.tencent.yml build
 ```
 ENV_FILE=../.env.test docker-compose -f docker/docker-compose.tencent.yml up -d
 ```
-
 **生产环境部署+运行**
 ```
 ENV_FILE=../.env.live docker-compose -f docker/docker-compose.tencent.yml up -d
+```
+
+**测试环境关闭**
+```
+ENV_FILE=../.env.test docker-compose -f docker/docker-compose.tencent.yml down
+```
+**生产环境关闭**
+```
+ENV_FILE=../.env.live docker-compose -f docker/docker-compose.tencent.yml down
 ```
 
 **Windows用户：**
@@ -126,7 +134,7 @@ MIT License
 
 ### 🔐 用户认证系统 (v0.2.0)
 - ✅ 用户注册/登录
-- ✅ JWT Token认证 
+- ✅ JWT Token认证
 - ✅ 访问Token和刷新Token
 - ✅ 密码安全加密（bcrypt）
 - ✅ 用户信息管理

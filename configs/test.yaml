@@ -1,6 +1,11 @@
 server:
-  port: 80
+  port: 8080
+  https_port: 8443
   mode: debug
+  enable_http: true
+  enable_https: true
+  ssl_cert_file: /etc/nginx/asecondchance.cn_bundle.crt
+  ssl_key_file: /etc/nginx/asecondchance.cn.key
   read_timeout: 30s
   write_timeout: 30s
   idle_timeout: 120s

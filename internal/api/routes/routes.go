@@ -19,7 +19,7 @@ func SetupRoutes(cfg *config.Config, container Container) *gin.Engine {
 	setupMiddleware(r, cfg)
 
 	// 注册健康检查路由
-	setupHealthRoutes(r, container)
+	setupHealthRoutes(r, cfg, container)
 
 	// 注册API路由
 	setupAPIRoutes(r, cfg, container)
@@ -140,14 +140,25 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 	logrus.Info("API routes setup completed")
 }
 
-func setupHealthRoutes(r *gin.Engine, container Container) {
+func setupHealthRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 	healthHandler := container.GetHealthHandler()
 
+	// 创建健康检查路由组，并注入配置
+	health := r.Group("/health")
+	health.Use(func(c *gin.Context) {
+		c.Set("config", cfg)
+		c.Next()
+	})
+
+	// 健康检查路由
 	r.GET("/health", healthHandler.Health)
 	r.GET("/ping", healthHandler.Ping)
 	r.GET("/ready", healthHandler.Ready)
 	r.GET("/version", healthHandler.Version)
 	r.GET("/metrics", healthHandler.Metrics)
+
+	// 环境信息路由（带配置注入）
+	health.GET("/env", healthHandler.Environment)
 
 	logrus.Info("Health check routes setup completed")
 }

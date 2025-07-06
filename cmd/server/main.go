@@ -24,6 +24,9 @@ func main() {
 	// config的其他初始化
 	cfg.PostInit()
 
+	// 根据配置设置nginx环境
+	setNginxEnvironment(cfg)
+
 	// 初始化日志
 	initLogger(cfg)
 
@@ -131,51 +134,131 @@ func initLogger(cfg *config.Config) {
 	}).Info("Logger initialized")
 }
 
-// startServer 启动HTTP服务器
-func startServer(r http.Handler, cfg *config.Config) {
-	// 获取端口配置
-	port := cfg.Server.Port
-	if port == "" {
-		port = "8080"
-	}
+// setNginxEnvironment 根据配置设置nginx环境
+func setNginxEnvironment(cfg *config.Config) {
+	httpDisableFlag := "/tmp/nginx_disable_http"
 
-	// 创建HTTP服务器
-	srv := &http.Server{
-		Addr:         ":" + port,
-		Handler:      r,
-		ReadTimeout:  cfg.Server.ReadTimeout,
-		WriteTimeout: cfg.Server.WriteTimeout,
-		IdleTimeout:  cfg.Server.IdleTimeout,
-	}
-
-	// 在goroutine中启动服务器
-	go func() {
-		logrus.WithFields(logrus.Fields{
-			"port":          port,
-			"read_timeout":  cfg.Server.ReadTimeout,
-			"write_timeout": cfg.Server.WriteTimeout,
-			"idle_timeout":  cfg.Server.IdleTimeout,
-		}).Info("Starting HTTP server")
-
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logrus.WithError(err).Fatal("Failed to start server")
+	// 根据配置决定是否禁用HTTP
+	if !cfg.Server.EnableHTTP {
+		// 创建禁用HTTP的标识文件
+		if file, err := os.Create(httpDisableFlag); err != nil {
+			logrus.WithError(err).Warn("Failed to create nginx HTTP disable flag")
+		} else {
+			file.Close()
+			logrus.Info("HTTP access disabled for nginx (live environment)")
 		}
-	}()
+	} else {
+		// 删除禁用HTTP的标识文件（如果存在）
+		if err := os.Remove(httpDisableFlag); err != nil && !os.IsNotExist(err) {
+			logrus.WithError(err).Warn("Failed to remove nginx HTTP disable flag")
+		} else if err == nil {
+			logrus.Info("HTTP access enabled for nginx (test environment)")
+		}
+	}
+}
+
+// startServer 启动HTTP和/或HTTPS服务器
+func startServer(r http.Handler, cfg *config.Config) {
+	var servers []*http.Server
+
+	// 根据配置启动HTTP服务器
+	if cfg.Server.EnableHTTP {
+		httpPort := cfg.Server.Port
+		if httpPort == "" {
+			httpPort = "8080"
+		}
+
+		httpServer := &http.Server{
+			Addr:         "0.0.0.0:" + httpPort,
+			Handler:      r,
+			ReadTimeout:  cfg.Server.ReadTimeout,
+			WriteTimeout: cfg.Server.WriteTimeout,
+			IdleTimeout:  cfg.Server.IdleTimeout,
+		}
+
+		servers = append(servers, httpServer)
+
+		// 在goroutine中启动HTTP服务器
+		go func() {
+			logrus.WithFields(logrus.Fields{
+				"port":          httpPort,
+				"protocol":      "HTTP",
+				"read_timeout":  cfg.Server.ReadTimeout,
+				"write_timeout": cfg.Server.WriteTimeout,
+				"idle_timeout":  cfg.Server.IdleTimeout,
+			}).Info("Starting HTTP server")
+
+			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logrus.WithError(err).Fatal("Failed to start HTTP server")
+			}
+		}()
+	} else {
+		logrus.Info("HTTP server disabled by configuration")
+	}
+
+	// 根据配置启动HTTPS服务器
+	if cfg.Server.EnableHTTPS {
+		httpsPort := cfg.Server.HTTPSPort
+		if httpsPort == "" {
+			httpsPort = "8443"
+		}
+
+		httpsServer := &http.Server{
+			Addr:         "0.0.0.0:" + httpsPort,
+			Handler:      r,
+			ReadTimeout:  cfg.Server.ReadTimeout,
+			WriteTimeout: cfg.Server.WriteTimeout,
+			IdleTimeout:  cfg.Server.IdleTimeout,
+		}
+
+		servers = append(servers, httpsServer)
+
+		// 在goroutine中启动HTTPS服务器
+		go func() {
+			logrus.WithFields(logrus.Fields{
+				"port":          httpsPort,
+				"protocol":      "HTTPS",
+				"cert_file":     cfg.Server.SSLCertFile,
+				"key_file":      cfg.Server.SSLKeyFile,
+				"read_timeout":  cfg.Server.ReadTimeout,
+				"write_timeout": cfg.Server.WriteTimeout,
+				"idle_timeout":  cfg.Server.IdleTimeout,
+			}).Info("Starting HTTPS server")
+
+			if err := httpsServer.ListenAndServeTLS(cfg.Server.SSLCertFile, cfg.Server.SSLKeyFile); err != nil && err != http.ErrServerClosed {
+				logrus.WithError(err).Fatal("Failed to start HTTPS server")
+			}
+		}()
+	} else {
+		logrus.Info("HTTPS server disabled by configuration")
+	}
+
+	// 检查是否至少启动了一个服务器
+	if len(servers) == 0 {
+		logrus.Fatal("No servers enabled. Please enable at least one of HTTP or HTTPS")
+	}
 
 	// 等待中断信号以优雅关闭服务器
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logrus.Info("Shutting down server...")
+	logrus.Info("Shutting down servers...")
 
-	// 5秒超时优雅关闭
+	// 5秒超时优雅关闭所有服务器
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
-		logrus.WithError(err).Fatal("Server forced to shutdown")
+	// 并行关闭所有服务器
+	for i, server := range servers {
+		go func(idx int, srv *http.Server) {
+			if err := srv.Shutdown(ctx); err != nil {
+				logrus.WithError(err).WithField("server_index", idx).Error("Server forced to shutdown")
+			}
+		}(i, server)
 	}
 
-	logrus.Info("Server stopped gracefully")
+	// 等待所有服务器关闭
+	<-ctx.Done()
+	logrus.Info("All servers stopped gracefully")
 }

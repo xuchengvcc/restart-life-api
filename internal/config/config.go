@@ -21,6 +21,9 @@ type Config struct {
 
 // Load 加载配置文件
 func Load(configPath string) (*Config, error) {
+	// 设置默认值
+	setDefaults()
+
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("yaml")
 

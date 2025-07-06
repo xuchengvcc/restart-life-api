@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
 
 // HealthHandler 健康检查处理器
@@ -51,6 +53,18 @@ type VersionResponse struct {
 	BuildTime string `json:"build_time"`
 	GoVersion string `json:"go_version"`
 	GitCommit string `json:"git_commit,omitempty"`
+}
+
+// EnvironmentResponse 环境信息响应
+type EnvironmentResponse struct {
+	Environment string `json:"environment"`
+	Mode        string `json:"mode"`
+	EnableHTTP  bool   `json:"enable_http"`
+	EnableHTTPS bool   `json:"enable_https"`
+	Port        string `json:"port"`
+	HTTPSPort   string `json:"https_port"`
+	Version     string `json:"version"`
+	Timestamp   int64  `json:"timestamp"`
 }
 
 // Health 健康检查接口
@@ -197,4 +211,47 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, metrics)
+}
+
+// Environment 环境信息接口
+// @Summary 环境信息检查
+// @Description 获取当前服务的环境配置信息
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} EnvironmentResponse
+// @Router /health/env [get]
+func (h *HealthHandler) Environment(c *gin.Context) {
+	// 从上下文获取配置（需要在路由中设置）
+	cfg, exists := c.Get("config")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration not available"})
+		return
+	}
+
+	config := cfg.(*config.Config)
+
+	// 判断环境类型
+	environment := "test"
+	if !config.Server.EnableHTTP {
+		environment = "live"
+	}
+
+	response := EnvironmentResponse{
+		Environment: environment,
+		Mode:        config.Server.Mode,
+		EnableHTTP:  config.Server.EnableHTTP,
+		EnableHTTPS: config.Server.EnableHTTPS,
+		Port:        config.Server.Port,
+		HTTPSPort:   config.Server.HTTPSPort,
+		Version:     h.version,
+		Timestamp:   time.Now().Unix(),
+	}
+
+	// 添加响应头以供nginx使用
+	c.Header("X-Environment", environment)
+	c.Header("X-Enable-HTTP", fmt.Sprintf("%t", config.Server.EnableHTTP))
+	c.Header("X-Enable-HTTPS", fmt.Sprintf("%t", config.Server.EnableHTTPS))
+
+	c.JSON(http.StatusOK, response)
 }

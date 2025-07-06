@@ -8,16 +8,18 @@ services:
     container_name: restart-life-api
     ports:
       - "8080:8080"
+      - "8443:8443"
     environment:
       - GIN_MODE=debug
     volumes:
       - ../logs:/app/logs
       - ../configs:/app/configs:ro
+      - /etc/nginx:/etc/nginx:ro
     networks:
       - restart-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "-O", "/dev/null", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,3 +31,7 @@ services:
 networks:
   restart-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+          gateway: 172.19.0.1
