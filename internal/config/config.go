@@ -17,6 +17,7 @@ type Config struct {
 	CORS     CORSConfig     `mapstructure:"cors"`
 	Logging  LoggingConfig  `mapstructure:"logging"`
 	AI       AIConfig       `mapstructure:"ai"`
+	Email    EmailConfig    `mapstructure:"email"`
 }
 
 // Load 加载配置文件
@@ -68,6 +69,7 @@ func setDefaults() {
 	setCORConfigDefault()
 	setLogConfigDefault()
 	setAIConfigDefault()
+	setEmailConfigDefault()
 }
 
 func (c *Config) PostInit() {

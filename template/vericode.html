@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子邮箱验证码</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .code-container {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .code-label {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .verification-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: white;
+            letter-spacing: 8px;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .info {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .info h3 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 16px;
+        }
+
+        .info ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #4a5568;
+            line-height: 1.8;
+        }
+
+        .info li {
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .footer p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer .company {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                border-radius: 8px;
+            }
+
+            .header,
+            .content,
+            .footer {
+                padding: 25px 20px;
+            }
+
+            .verification-code {
+                font-size: 28px;
+                letter-spacing: 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>A Second Chance</h1>
+        </div>
+
+        <div class="content">
+
+            <div class="code-container">
+                <div class="code-label">您的验证码是：</div>
+                <div class="verification-code">{{.Code}}</div>
+            </div>
+
+            <div class="info">
+                <h3>📋 使用说明</h3>
+                <ul>
+                    <li>此验证码有效期为 <strong>10分钟</strong></li>
+                    <li>请在有效期内完成验证，过期后需要重新获取</li>
+                    <li>为了您的账户安全，请勿将验证码泄露给他人</li>
+                    <li>如果您没有请求此验证码，请忽略此邮件</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p class="company">A Second Chance 团队</p>
+            <p>
+                本邮件由系统自动发送，请勿直接回复。<br>
+                如有疑问，请联系我们的客服团队。<br>
+                <br>
+                © 2025 A Second Chance. 保留所有权利。
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

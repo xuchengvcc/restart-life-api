@@ -28,6 +28,13 @@ const (
 	ErrCodeGameSessionNotFound = 4001
 	ErrCodeGameActionFailed    = 4002
 	ErrCodeInvalidGameState    = 4003
+
+	// 邮件相关错误代码 (5xxx)
+	ErrCodeEmailSendFailed     = 5001
+	ErrCodeEmailConfigInvalid  = 5002
+	ErrCodeEmailTemplateFailed = 5003
+	ErrCodeEmailConnectFailed  = 5004
+	ErrCodeEmailAuthFailed     = 5005
 )
 
 // 响应消息常量
@@ -91,6 +98,23 @@ const (
 	MsgJWTParseError     = "failed to parse token"
 	MsgJWTInvalidToken   = "invalid token"
 	MsgJWTInvalidClaims  = "invalid token claims"
+
+	// 邮件相关错误
+	MsgEmailSendFailed            = "failed to send email"
+	MsgEmailConfigInvalid         = "invalid email configuration"
+	MsgEmailTemplateFailed        = "failed to process email template"
+	MsgEmailConnectFailed         = "failed to connect to email server"
+	MsgEmailAuthFailed            = "email authentication failed"
+	MsgEmailTemplateNotFound      = "email template not found"
+	MsgEmailGetWorkdirFailed      = "failed to get current working directory"
+	MsgEmailReadTemplateFailed    = "failed to read email template"
+	MsgEmailProcessTemplateFailed = "failed to process email template"
+	MsgEmailCreateClientFailed    = "failed to create smtp client"
+	MsgEmailTLSFailed             = "failed to start tls"
+	MsgEmailSetSenderFailed       = "failed to set sender"
+	MsgEmailSetRecipientFailed    = "failed to set recipient"
+	MsgEmailGetWriterFailed       = "failed to get email writer"
+	MsgEmailWriteContentFailed    = "failed to write email content"
 )
 
 // 预定义错误变量 - 用于 errors.Is 判断
@@ -145,4 +169,21 @@ var (
 	ErrJWTParseError     = errors.New(MsgJWTParseError)
 	ErrJWTInvalidToken   = errors.New(MsgJWTInvalidToken)
 	ErrJWTInvalidClaims  = errors.New(MsgJWTInvalidClaims)
+
+	// 邮件相关错误
+	ErrEmailSendFailed            = errors.New(MsgEmailSendFailed)
+	ErrEmailConfigInvalid         = errors.New(MsgEmailConfigInvalid)
+	ErrEmailTemplateFailed        = errors.New(MsgEmailTemplateFailed)
+	ErrEmailConnectFailed         = errors.New(MsgEmailConnectFailed)
+	ErrEmailAuthFailed            = errors.New(MsgEmailAuthFailed)
+	ErrEmailTemplateNotFound      = errors.New(MsgEmailTemplateNotFound)
+	ErrEmailGetWorkdirFailed      = errors.New(MsgEmailGetWorkdirFailed)
+	ErrEmailReadTemplateFailed    = errors.New(MsgEmailReadTemplateFailed)
+	ErrEmailProcessTemplateFailed = errors.New(MsgEmailProcessTemplateFailed)
+	ErrEmailCreateClientFailed    = errors.New(MsgEmailCreateClientFailed)
+	ErrEmailTLSFailed             = errors.New(MsgEmailTLSFailed)
+	ErrEmailSetSenderFailed       = errors.New(MsgEmailSetSenderFailed)
+	ErrEmailSetRecipientFailed    = errors.New(MsgEmailSetRecipientFailed)
+	ErrEmailGetWriterFailed       = errors.New(MsgEmailGetWriterFailed)
+	ErrEmailWriteContentFailed    = errors.New(MsgEmailWriteContentFailed)
 )

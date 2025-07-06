@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎注册重启新生游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 50px 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1.5" fill="rgba(255,255,255,0.15)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            margin: 0;
+            font-size: 18px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .greeting {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .username {
+            color: #4facfe;
+            font-weight: 700;
+        }
+
+        .message {
+            font-size: 16px;
+            color: #4a5568;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            text-align: left;
+        }
+
+        .feature-list {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .feature-list h3 {
+            margin: 0 0 20px 0;
+            color: #2d3748;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+
+        .feature-icon {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 40px 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .footer p {
+            margin: 0 0 10px 0;
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .footer .company {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .social-links {
+            margin: 20px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 8px;
+            background: #e9ecef;
+            border-radius: 50%;
+            text-decoration: none;
+            color: #6c757d;
+            transition: background-color 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #4facfe;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px;
+                border-radius: 12px;
+            }
+
+            .header,
+            .content,
+            .footer {
+                padding: 30px 20px;
+            }
+
+            .greeting {
+                font-size: 20px;
+            }
+
+            .feature-list {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="welcome-icon">🎉</div>
+            <h1>A Second Chance</h1>
+            <p class="subtitle">开启您的新人生体验</p>
+        </div>
+
+        <div class="content">
+            <div class="greeting">
+                欢迎您，<span class="username">{{.Username}}</span>！
+            </div>
+
+            <div class="message">
+                <p>感谢您加入 A Second Chance 大家庭！我们很高兴您选择了我们的平台来探索人生的无限可能。</p>
+
+                <p>在这里，您将能够：</p>
+            </div>
+
+            <div class="feature-list">
+                <h3>🌟 平台特色功能</h3>
+                <div class="feature-item">
+                    <div class="feature-icon">✨</div>
+                    <div>
+                        <strong>AI 智能角色扮演</strong><br>
+                        <span style="color: #6c757d; font-size: 14px;">与智能AI对话，体验不同的人生角色</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎭</div>
+                    <div>
+                        <strong>多样化角色选择</strong><br>
+                        <span style="color: #6c757d; font-size: 14px;">探索各种职业和生活方式的可能性</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📈</div>
+                    <div>
+                        <strong>个人成长追踪</strong><br>
+                        <span style="color: #6c757d; font-size: 14px;">记录您的成长历程和重要决策</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🤝</div>
+                    <div>
+                        <strong>社区互动交流</strong><br>
+                        <span style="color: #6c757d; font-size: 14px;">与其他用户分享经验和心得</span>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-bottom: 30px; color: #4a5568;">
+                现在就开始您新的人生之旅吧！
+            </p>
+
+            <a href="https://asecondchance.cn/dashboard" class="cta-button">
+                开始探索 →
+            </a>
+        </div>
+
+        <div class="footer">
+            <p class="company">A Second Chance 团队</p>
+            <p>
+                注册时间: {{.Time}}<br>
+                邮箱: {{.To}}
+            </p>
+
+            <div class="social-links">
+                <a href="#" class="social-link" title="官方网站">🌐</a>
+                <a href="#" class="social-link" title="客服支持">💬</a>
+                <a href="#" class="social-link" title="用户社区">👥</a>
+            </div>
+
+            <p style="font-size: 12px; color: #adb5bd; margin-top: 20px;">
+                本邮件由系统自动发送，请勿直接回复。<br>
+                如有任何问题，请联系我们的客服团队。<br>
+                <br>
+                © 2025 A Second Chance. 保留所有权利。
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

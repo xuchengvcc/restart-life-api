@@ -64,6 +64,16 @@ rate_limit:
   requests_per_minute: 100
   burst: 50
 
+email:
+  smtp:
+    server: smtp.163.com
+    port: "465" # 使用SSL端口
+    user: A Second Chance
+    password: your-email-auth-password
+    from: your-email@163.com
+  template:
+    vericode: template/vericode.html
+
 ai:
   providers:
     - name: gemini
