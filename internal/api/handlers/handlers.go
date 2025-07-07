@@ -15,8 +15,8 @@ func NewHandlers() *Handlers {
 	return &Handlers{}
 }
 
-func (h *Handlers) InitAuthHandlers(service services.AuthService, logger *logrus.Logger) {
-	h.AuthHandler = NewAuthHandler(service, logger)
+func (h *Handlers) InitAuthHandlers(authService services.AuthService, verificationCodeService services.VerificationCodeService, logger *logrus.Logger) {
+	h.AuthHandler = NewAuthHandler(authService, verificationCodeService, logger)
 }
 
 func (h *Handlers) InitHealthHandlers(version string) {

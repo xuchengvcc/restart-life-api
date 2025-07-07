@@ -70,6 +70,11 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 
+			// 验证码相关路由
+			auth.POST("/send-verification-code", authHandler.SendVerificationCode)
+			auth.POST("/verify-code", authHandler.VerifyCode)
+			auth.POST("/reset-password", authHandler.ResetPassword)
+
 			// 需要认证的路由
 			authProtected := auth.Group("")
 			authProtected.Use(authMiddleware.RequireAuth())

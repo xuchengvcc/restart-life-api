@@ -15,7 +15,7 @@ type EmailTemplate struct {
 // GetVerificationCodeTemplate 获取验证码邮件模板
 func GetVerificationCodeTemplate(to string, code int32) *EmailTemplate {
 	return &EmailTemplate{
-		Subject:  "验证码 - A Second Chance",
+		Subject:  "电子邮箱验证码",
 		Template: "template/vericode.html",
 		Data: map[string]interface{}{
 			"To":   to,
@@ -28,7 +28,7 @@ func GetVerificationCodeTemplate(to string, code int32) *EmailTemplate {
 // GetWelcomeTemplate 获取欢迎邮件模板（可扩展）
 func GetWelcomeTemplate(to string, username string) *EmailTemplate {
 	return &EmailTemplate{
-		Subject:  "欢迎加入 A Second Chance",
+		Subject:  "欢迎注册重启新生游戏",
 		Template: "template/welcome.html", // 可以添加更多模板
 		Data: map[string]interface{}{
 			"To":       to,
@@ -41,7 +41,7 @@ func GetWelcomeTemplate(to string, username string) *EmailTemplate {
 // GetPasswordResetTemplate 获取密码重置邮件模板（可扩展）
 func GetPasswordResetTemplate(to string, resetLink string) *EmailTemplate {
 	return &EmailTemplate{
-		Subject:  "密码重置 - A Second Chance",
+		Subject:  "账户密码重置",
 		Template: "template/password_reset.html", // 可以添加更多模板
 		Data: map[string]interface{}{
 			"To":        to,

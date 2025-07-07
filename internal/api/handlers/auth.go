@@ -15,15 +15,21 @@ import (
 
 // AuthHandler 认证处理器
 type AuthHandler struct {
-	authService services.AuthService
-	logger      *logrus.Logger
+	authService             services.AuthService
+	verificationCodeService services.VerificationCodeService
+	logger                  *logrus.Logger
 }
 
 // NewAuthHandler 创建认证处理器
-func NewAuthHandler(authService services.AuthService, logger *logrus.Logger) *AuthHandler {
+func NewAuthHandler(
+	authService services.AuthService,
+	verificationCodeService services.VerificationCodeService,
+	logger *logrus.Logger,
+) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
-		logger:      logger,
+		authService:             authService,
+		verificationCodeService: verificationCodeService,
+		logger:                  logger,
 	}
 }
 
@@ -285,5 +291,159 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	}
 
 	response := models.NewSuccessResponse(gin.H{"message": "密码修改成功"})
+	c.JSON(http.StatusOK, response)
+}
+
+// SendVerificationCode 发送验证码
+// @Summary 发送验证码
+// @Description 向指定邮箱发送验证码
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body models.SendVerificationCodeRequest true "发送验证码请求"
+// @Success 200 {object} models.APIResponse
+// @Failure 400 {object} models.APIResponse
+// @Failure 429 {object} models.APIResponse
+// @Failure 500 {object} models.APIResponse
+// @Router /api/v1/auth/send-verification-code [post]
+func (h *AuthHandler) SendVerificationCode(c *gin.Context) {
+	var req models.SendVerificationCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response := models.NewErrorResponse(models.ErrCodeValidationFailed, "Invalid request data", err.Error())
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// 发送重置密码验证码
+	err := h.verificationCodeService.SendVerificationCode(
+		c.Request.Context(),
+		strings.TrimSpace(strings.ToLower(req.Email)),
+		models.VerificationCodeTypeResetPassword,
+	)
+
+	if err != nil {
+		if errors.Is(err, constants.ErrTooManyRequests) {
+			response := models.NewErrorResponse(models.ErrCodeTooManyRequests, "发送过于频繁，请稍后再试")
+			c.JSON(http.StatusTooManyRequests, response)
+		} else if errors.Is(err, constants.ErrEmailAddressInvalid) {
+			response := models.NewErrorResponse(models.ErrCodeEmailAddressInvalid, "邮箱地址无效")
+			c.JSON(http.StatusBadRequest, response)
+		} else if errors.Is(err, constants.ErrEmailSendFailed) {
+			response := models.NewErrorResponse(models.ErrCodeEmailSendFailed, "邮件发送失败")
+			c.JSON(http.StatusInternalServerError, response)
+		} else {
+			h.logger.WithError(err).Error("Failed to send verification code")
+			response := models.NewErrorResponse(models.ErrCodeInternalError, "发送验证码失败")
+			c.JSON(http.StatusInternalServerError, response)
+		}
+		return
+	}
+
+	response := models.NewSuccessResponse(gin.H{"message": "验证码已发送到您的邮箱"})
+	c.JSON(http.StatusOK, response)
+}
+
+// VerifyCode 验证验证码并获取重置令牌
+// @Summary 验证验证码并获取重置令牌
+// @Description 验证邮箱验证码是否正确，验证成功后返回用于重置密码的临时令牌
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body models.VerifyCodeRequest true "验证验证码请求"
+// @Success 200 {object} models.APIResponse{data=models.VerifyCodeResponse}
+// @Failure 400 {object} models.APIResponse
+// @Failure 410 {object} models.APIResponse
+// @Failure 500 {object} models.APIResponse
+// @Router /api/v1/auth/verify-code [post]
+func (h *AuthHandler) VerifyCode(c *gin.Context) {
+	var req models.VerifyCodeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response := models.NewErrorResponse(models.ErrCodeValidationFailed, "Invalid request data", err.Error())
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// 验证验证码并创建重置令牌
+	resetToken, err := h.verificationCodeService.VerifyCodeAndCreateResetToken(
+		c.Request.Context(),
+		strings.TrimSpace(strings.ToLower(req.Email)),
+		req.Code,
+	)
+
+	if err != nil {
+		if errors.Is(err, constants.ErrVerificationCodeInvalid) {
+			response := models.NewErrorResponse(models.ErrCodeVerificationCodeInvalid, "验证码无效")
+			c.JSON(http.StatusBadRequest, response)
+		} else if errors.Is(err, constants.ErrVerificationCodeExpired) {
+			response := models.NewErrorResponse(models.ErrCodeVerificationCodeExpired, "验证码已过期")
+			c.JSON(http.StatusGone, response)
+		} else if errors.Is(err, constants.ErrVerificationCodeUsed) {
+			response := models.NewErrorResponse(models.ErrCodeVerificationCodeUsed, "验证码已使用")
+			c.JSON(http.StatusBadRequest, response)
+		} else if errors.Is(err, constants.ErrEmailAddressInvalid) {
+			response := models.NewErrorResponse(models.ErrCodeEmailAddressInvalid, "邮箱地址无效")
+			c.JSON(http.StatusBadRequest, response)
+		} else if errors.Is(err, constants.ErrUserNotFound) {
+			response := models.NewErrorResponse(models.ErrCodeUserNotFound, "用户不存在")
+			c.JSON(http.StatusNotFound, response)
+		} else {
+			h.logger.WithError(err).Error("Failed to verify verification code")
+			response := models.NewErrorResponse(models.ErrCodeInternalError, "验证码验证失败")
+			c.JSON(http.StatusInternalServerError, response)
+		}
+		return
+	}
+
+	// 返回重置令牌
+	responseData := models.VerifyCodeResponse{
+		Message:    "验证码验证成功",
+		ResetToken: resetToken,
+	}
+	response := models.NewSuccessResponse(responseData)
+	c.JSON(http.StatusOK, response)
+}
+
+// ResetPassword 使用令牌重置密码
+// @Summary 使用令牌重置密码
+// @Description 使用验证验证码后获得的令牌重置用户密码
+// @Tags 认证
+// @Accept json
+// @Produce json
+// @Param request body models.ResetPasswordWithTokenRequest true "重置密码请求"
+// @Success 200 {object} models.APIResponse
+// @Failure 400 {object} models.APIResponse
+// @Failure 404 {object} models.APIResponse
+// @Failure 401 {object} models.APIResponse
+// @Failure 500 {object} models.APIResponse
+// @Router /api/v1/auth/reset-password [post]
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req models.ResetPasswordWithTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response := models.NewErrorResponse(models.ErrCodeValidationFailed, "Invalid request data", err.Error())
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// 使用令牌重置密码
+	err := h.authService.ResetPasswordWithToken(c.Request.Context(), &req)
+	if err != nil {
+		if errors.Is(err, constants.ErrTokenInvalid) {
+			response := models.NewErrorResponse(models.ErrCodeTokenInvalid, "重置令牌无效或已过期")
+			c.JSON(http.StatusUnauthorized, response)
+		} else if errors.Is(err, constants.ErrUserNotFound) {
+			response := models.NewErrorResponse(models.ErrCodeUserNotFound, "用户不存在")
+			c.JSON(http.StatusNotFound, response)
+		} else if errors.Is(err, constants.ErrPasswordProcessFailed) {
+			response := models.NewErrorResponse(models.ErrCodeValidationFailed, err.Error())
+			c.JSON(http.StatusBadRequest, response)
+		} else {
+			h.logger.WithError(err).Error("Failed to reset password with token")
+			response := models.NewErrorResponse(models.ErrCodeInternalError, "重置密码失败")
+			c.JSON(http.StatusInternalServerError, response)
+		}
+		return
+	}
+
+	response := models.NewSuccessResponse(gin.H{"message": "密码重置成功"})
 	c.JSON(http.StatusOK, response)
 }

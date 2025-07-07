@@ -53,6 +53,20 @@ var (
 	ErrCodePermissionDenied   = constants.ErrCodePermissionDenied
 	ErrCodeValidationFailed   = constants.ErrCodeValidationFailed
 	ErrCodeInternalError      = constants.ErrCodeInternalError
+
+	// 邮件相关错误代码
+	ErrCodeEmailSendFailed     = constants.ErrCodeEmailSendFailed
+	ErrCodeEmailConfigInvalid  = constants.ErrCodeEmailConfigInvalid
+	ErrCodeEmailTemplateFailed = constants.ErrCodeEmailTemplateFailed
+	ErrCodeEmailConnectFailed  = constants.ErrCodeEmailConnectFailed
+	ErrCodeEmailAuthFailed     = constants.ErrCodeEmailAuthFailed
+
+	// 验证码相关错误代码
+	ErrCodeVerificationCodeExpired = constants.ErrCodeVerificationCodeExpired
+	ErrCodeVerificationCodeInvalid = constants.ErrCodeVerificationCodeInvalid
+	ErrCodeVerificationCodeUsed    = constants.ErrCodeVerificationCodeUsed
+	ErrCodeTooManyRequests         = constants.ErrCodeTooManyRequests
+	ErrCodeEmailAddressInvalid     = constants.ErrCodeEmailAddressInvalid
 )
 
 // 错误消息映射
@@ -65,6 +79,20 @@ var ErrorMessages = map[int]string{
 	ErrCodePermissionDenied:   "权限不足",
 	ErrCodeValidationFailed:   "数据验证失败",
 	ErrCodeInternalError:      "内部服务器错误",
+
+	// 邮件相关错误
+	ErrCodeEmailSendFailed:     "邮件发送失败",
+	ErrCodeEmailConfigInvalid:  "邮件配置无效",
+	ErrCodeEmailTemplateFailed: "邮件模板处理失败",
+	ErrCodeEmailConnectFailed:  "邮件服务器连接失败",
+	ErrCodeEmailAuthFailed:     "邮件服务器认证失败",
+
+	// 验证码相关错误
+	ErrCodeVerificationCodeExpired: "验证码已过期",
+	ErrCodeVerificationCodeInvalid: "验证码无效",
+	ErrCodeVerificationCodeUsed:    "验证码已使用",
+	ErrCodeTooManyRequests:         "请求过于频繁",
+	ErrCodeEmailAddressInvalid:     "邮箱地址无效",
 }
 
 // GetErrorMessage 获取错误消息

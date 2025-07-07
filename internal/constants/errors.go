@@ -35,6 +35,13 @@ const (
 	ErrCodeEmailTemplateFailed = 5003
 	ErrCodeEmailConnectFailed  = 5004
 	ErrCodeEmailAuthFailed     = 5005
+
+	// 验证码相关错误代码 (6xxx)
+	ErrCodeVerificationCodeExpired = 6001
+	ErrCodeVerificationCodeInvalid = 6002
+	ErrCodeVerificationCodeUsed    = 6003
+	ErrCodeTooManyRequests         = 6004
+	ErrCodeEmailAddressInvalid     = 6005
 )
 
 // 响应消息常量
@@ -115,6 +122,13 @@ const (
 	MsgEmailSetRecipientFailed    = "failed to set recipient"
 	MsgEmailGetWriterFailed       = "failed to get email writer"
 	MsgEmailWriteContentFailed    = "failed to write email content"
+
+	// 验证码相关错误
+	MsgVerificationCodeExpired = "verification code has expired"
+	MsgVerificationCodeInvalid = "verification code is invalid"
+	MsgVerificationCodeUsed    = "verification code has been used"
+	MsgTooManyRequests         = "too many requests, please try again later"
+	MsgEmailAddressInvalid     = "email address is invalid"
 )
 
 // 预定义错误变量 - 用于 errors.Is 判断
@@ -186,4 +200,11 @@ var (
 	ErrEmailSetRecipientFailed    = errors.New(MsgEmailSetRecipientFailed)
 	ErrEmailGetWriterFailed       = errors.New(MsgEmailGetWriterFailed)
 	ErrEmailWriteContentFailed    = errors.New(MsgEmailWriteContentFailed)
+
+	// 验证码相关错误
+	ErrVerificationCodeExpired = errors.New(MsgVerificationCodeExpired)
+	ErrVerificationCodeInvalid = errors.New(MsgVerificationCodeInvalid)
+	ErrVerificationCodeUsed    = errors.New(MsgVerificationCodeUsed)
+	ErrTooManyRequests         = errors.New(MsgTooManyRequests)
+	ErrEmailAddressInvalid     = errors.New(MsgEmailAddressInvalid)
 )

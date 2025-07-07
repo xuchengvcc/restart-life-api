@@ -19,29 +19,34 @@ type AuthService interface {
 	GetProfile(ctx context.Context, userID uint) (*models.User, error)
 	UpdateProfile(ctx context.Context, userID uint, req *models.UpdateProfileRequest) (*models.User, error)
 	ChangePassword(ctx context.Context, userID uint, req *models.ChangePasswordRequest) error
+	ResetPassword(ctx context.Context, req *models.ResetPasswordRequest) error
+	ResetPasswordWithToken(ctx context.Context, req *models.ResetPasswordWithTokenRequest) error
 	ValidateToken(ctx context.Context, token string) (*utils.Claims, error)
 }
 
 // authService 认证服务实现
 type authService struct {
-	userRepo        repository.UserRepository
-	jwtManager      *utils.JWTManager
-	passwordManager *utils.PasswordManager
-	logger          *logrus.Logger
+	userRepo                repository.UserRepository
+	verificationCodeService VerificationCodeService
+	jwtManager              *utils.JWTManager
+	passwordManager         *utils.PasswordManager
+	logger                  *logrus.Logger
 }
 
 // NewAuthService 创建认证服务
 func NewAuthService(
 	userRepo repository.UserRepository,
+	verificationCodeService VerificationCodeService,
 	jwtManager *utils.JWTManager,
 	passwordManager *utils.PasswordManager,
 	logger *logrus.Logger,
 ) AuthService {
 	return &authService{
-		userRepo:        userRepo,
-		jwtManager:      jwtManager,
-		passwordManager: passwordManager,
-		logger:          logger,
+		userRepo:                userRepo,
+		verificationCodeService: verificationCodeService,
+		jwtManager:              jwtManager,
+		passwordManager:         passwordManager,
+		logger:                  logger,
 	}
 }
 
@@ -301,6 +306,88 @@ func (s *authService) ChangePassword(ctx context.Context, userID uint, req *mode
 		constants.LogFieldUserID:   user.UserID,
 		constants.LogFieldUsername: user.Username,
 	}).Info("User password changed successfully")
+
+	return nil
+}
+
+// ResetPassword 重置密码
+func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswordRequest) error {
+	// 检查用户是否存在
+	user, err := s.userRepo.GetByEmail(ctx, strings.ToLower(req.Email))
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get user for password reset")
+		return constants.ErrUserNotFound
+	}
+
+	// 生成密码哈希
+	passwordHash, err := s.passwordManager.HashPassword(req.NewPassword)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to hash password")
+		return constants.ErrPasswordProcessFailed
+	}
+
+	// 更新密码
+	user.PasswordHash = passwordHash
+	err = s.userRepo.Update(ctx, user)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to update password")
+		return constants.ErrUserUpdateFailed
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		constants.LogFieldUserID:   user.UserID,
+		constants.LogFieldUsername: user.Username,
+	}).Info("User password reset successfully")
+
+	return nil
+}
+
+// ResetPasswordWithToken 使用令牌重置密码
+func (s *authService) ResetPasswordWithToken(ctx context.Context, req *models.ResetPasswordWithTokenRequest) error {
+	// 根据重置令牌获取邮箱
+	email, err := s.verificationCodeService.GetEmailByResetToken(ctx, req.ResetToken)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get email by reset token")
+		return constants.ErrInternalError
+	}
+
+	if email == "" {
+		return constants.ErrTokenInvalid
+	}
+
+	// 根据邮箱查找用户
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to get user by email")
+		return constants.ErrUserNotFound
+	}
+
+	// 生成密码哈希
+	passwordHash, err := s.passwordManager.HashPassword(req.NewPassword)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to hash password")
+		return constants.ErrPasswordProcessFailed
+	}
+
+	// 更新密码
+	user.PasswordHash = passwordHash
+	err = s.userRepo.Update(ctx, user)
+	if err != nil {
+		s.logger.WithError(err).Error("Failed to update password")
+		return constants.ErrUserUpdateFailed
+	}
+
+	// 删除重置令牌（一次性使用）
+	if err := s.verificationCodeService.DeletePasswordResetToken(ctx, req.ResetToken); err != nil {
+		s.logger.WithError(err).Warn("Failed to delete password reset token")
+		// 不返回错误，因为密码已经成功重置
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		constants.LogFieldUserID:   user.UserID,
+		constants.LogFieldUsername: user.Username,
+		"email":                    email,
+	}).Info("User password reset using token successfully")
 
 	return nil
 }
