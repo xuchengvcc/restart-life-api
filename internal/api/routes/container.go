@@ -11,4 +11,5 @@ type Container interface {
 	GetAuthHandler() *handlers.AuthHandler
 	GetAIHandler() *handlers.AIHandler
 	GetHealthHandler() *handlers.HealthHandler
+	GetCharacterHandler() *handlers.CharacterHandler
 }

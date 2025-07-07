@@ -165,7 +165,6 @@ PUT  /api/v1/characters/:id      # 更新角色信息
 DELETE /api/v1/characters/:id    # 删除角色
 GET  /api/v1/characters/:id/attributes # 获取角色属性
 PUT  /api/v1/characters/:id/attributes # 更新角色属性
-GET  /api/v1/characters/:id/relationships # 获取角色关系
 ```
 
 #### 数据模型

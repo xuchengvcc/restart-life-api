@@ -58,6 +58,7 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 	authHandler := container.GetAuthHandler()
 	authMiddleware := container.GetAuthMiddleware()
 	aiHandler := container.GetAIHandler()
+	characterHandler := container.GetCharacterHandler()
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
@@ -90,12 +91,13 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 		characters := v1.Group("/characters")
 		characters.Use(authMiddleware.RequireAuth())
 		{
-			// TODO: 添加角色路由
-			characters.POST("", placeholderHandler("create character"))
-			characters.GET("", placeholderHandler("list characters"))
-			characters.GET("/:id", placeholderHandler("get character"))
-			characters.PUT("/:id", placeholderHandler("update character"))
-			characters.DELETE("/:id", placeholderHandler("delete character"))
+			characters.POST("/create", characterHandler.CreateCharacter)
+			characters.GET("/list", characterHandler.GetUserCharacters)
+			characters.GET("/get/:id", characterHandler.GetCharacter)
+			characters.PUT("/update/:id", characterHandler.UpdateCharacter)
+			characters.DELETE("/delete/:id", characterHandler.DeleteCharacter)
+			characters.GET("/attributes/get/:id", characterHandler.GetCharacterAttributes)
+			characters.PUT("/attributes/update/:id", characterHandler.UpdateCharacterAttributes)
 		}
 
 		// 游戏相关路由（需要认证）
@@ -116,15 +118,6 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			// TODO: 添加成就路由
 			achievements.GET("/:character_id", placeholderHandler("get achievements"))
 			achievements.GET("/categories", placeholderHandler("get achievement categories"))
-		}
-
-		// 关系相关路由（需要认证）
-		relationships := v1.Group("/relationships")
-		relationships.Use(authMiddleware.RequireAuth())
-		{
-			// TODO: 添加关系路由
-			relationships.GET("/:character_id", placeholderHandler("get relationships"))
-			relationships.POST("/:character_id", placeholderHandler("create relationship"))
 		}
 
 		// 统计相关路由（需要认证）

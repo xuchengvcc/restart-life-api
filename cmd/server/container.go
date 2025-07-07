@@ -29,23 +29,27 @@ type Container struct {
 	authMiddleware *middleware.AuthMiddleware
 
 	// 处理器
-	authHandler   *handlers.AuthHandler
-	aiHandler     *handlers.AIHandler
-	healthHandler *handlers.HealthHandler
+	authHandler      *handlers.AuthHandler
+	aiHandler        *handlers.AIHandler
+	healthHandler    *handlers.HealthHandler
+	characterHandler *handlers.CharacterHandler
 
 	// 服务
 	authService             services.AuthService
 	emailService            services.EmailService
 	verificationCodeService services.VerificationCodeService
+	characterService        services.CharacterService
 	aiServices              map[string]services.AIService
 
 	// 仓库
 	userRepository             repository.UserRepository
 	verificationCodeRepository repository.VerificationCodeRepository
+	characterRepository        repository.CharacterRepository
 
 	// DAO
 	userDAO             dao.UserDAO
 	verificationCodeDAO dao.VerificationCodeDAO
+	characterDAO        dao.CharacterDAO
 }
 
 // NewContainer 创建新的依赖注入容器
@@ -78,12 +82,14 @@ func (c *Container) initUtils() {
 func (c *Container) initDAOs() {
 	c.userDAO = dao.NewUserDAO(c.db)
 	c.verificationCodeDAO = *dao.NewVerificationCodeDAO(c.redis)
+	c.characterDAO = dao.NewCharacterDAO(c.db)
 }
 
 // initRepositories 初始化仓库
 func (c *Container) initRepositories() {
 	c.userRepository = repository.NewUserRepository(c.userDAO)
 	c.verificationCodeRepository = repository.NewVerificationCodeRepository(&c.verificationCodeDAO)
+	c.characterRepository = repository.NewCharacterRepository(c.characterDAO)
 }
 
 // initServices 初始化服务
@@ -107,6 +113,9 @@ func (c *Container) initServices() {
 		c.logger,
 	)
 
+	// 角色服务
+	c.characterService = services.NewCharacterService(c.characterRepository)
+
 	// AI服务
 	c.aiServices = services.NewAIServices(c.cfg.AI, c.logger)
 }
@@ -122,6 +131,9 @@ func (c *Container) initHandlers() {
 
 	// AI处理器
 	c.aiHandler = handlers.NewAIHandler(c.aiServices, c.logger)
+
+	// 角色处理器
+	c.characterHandler = handlers.NewCharacterHandler(c.characterService, c.logger)
 
 	c.healthHandler = handlers.NewHealthHandler("restart-life-api")
 }
@@ -144,4 +156,9 @@ func (c *Container) GetAIHandler() *handlers.AIHandler {
 // GetHealthHandler 获取健康检查处理器
 func (c *Container) GetHealthHandler() *handlers.HealthHandler {
 	return c.healthHandler
+}
+
+// GetCharacterHandler 获取角色处理器
+func (c *Container) GetCharacterHandler() *handlers.CharacterHandler {
+	return c.characterHandler
 }
