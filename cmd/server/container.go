@@ -33,12 +33,14 @@ type Container struct {
 	aiHandler        *handlers.AIHandler
 	healthHandler    *handlers.HealthHandler
 	characterHandler *handlers.CharacterHandler
+	gameHandler      *handlers.GameHandler
 
 	// 服务
 	authService             services.AuthService
 	emailService            services.EmailService
 	verificationCodeService services.VerificationCodeService
 	characterService        services.CharacterService
+	gameService             services.GameService
 	aiServices              map[string]services.AIService
 
 	// 仓库
@@ -118,6 +120,9 @@ func (c *Container) initServices() {
 
 	// AI服务
 	c.aiServices = services.NewAIServices(c.cfg.AI, c.logger)
+
+	// 游戏服务
+	c.gameService = services.NewGameService(c.characterRepository, c.aiServices, c.logger, c.redis)
 }
 
 // initMiddlewares 初始化中间件
@@ -134,6 +139,9 @@ func (c *Container) initHandlers() {
 
 	// 角色处理器
 	c.characterHandler = handlers.NewCharacterHandler(c.characterService, c.logger)
+
+	// 游戏处理器
+	c.gameHandler = handlers.NewGameHandler(c.gameService, c.logger)
 
 	c.healthHandler = handlers.NewHealthHandler("restart-life-api")
 }
@@ -161,4 +169,9 @@ func (c *Container) GetHealthHandler() *handlers.HealthHandler {
 // GetCharacterHandler 获取角色处理器
 func (c *Container) GetCharacterHandler() *handlers.CharacterHandler {
 	return c.characterHandler
+}
+
+// GetGameHandler 获取游戏处理器
+func (c *Container) GetGameHandler() *handlers.GameHandler {
+	return c.gameHandler
 }

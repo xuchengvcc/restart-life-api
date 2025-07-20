@@ -311,37 +311,36 @@ type GameState struct {
     CharacterID   string          `json:"character_id" db:"character_id"`
     CurrentAge    int             `json:"current_age" db:"current_age"`
     LifeStage     string          `json:"life_stage" db:"life_stage"`
-    CurrentEvents []Event         `json:"current_events"`
-    PendingDecisions []Decision   `json:"pending_decisions"`
+    KeyEvents     []Event         `json:"key_events"`
+    PendingDecisions *Decision   `json:"pending_decisions"`
     Attributes    CharacterAttributes `json:"attributes"`
-    Relationships []Relationship  `json:"relationships"`
+    Relationships string  `json:"relationships"`
     LastSaveTime  time.Time      `json:"last_save_time" db:"last_save_time"`
 }
 
 type Event struct {
     EventID     string    `json:"event_id" db:"event_id"`
     CharacterID string    `json:"character_id" db:"character_id"`
-    EventType   string    `json:"event_type" db:"event_type"`
-    Title       string    `json:"title" db:"title"`
     Description string    `json:"description" db:"description"`
     Age         int       `json:"age" db:"age"`
-    Impact      EventImpact `json:"impact"`
+    Impact      string    `json:"impact"`
     CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 type Decision struct {
-    DecisionID  string    `json:"decision_id" db:"decision_id"`
-    EventID     string    `json:"event_id" db:"event_id"`
-    Question    string    `json:"question" db:"question"`
-    Options     []DecisionOption `json:"options"`
-    Deadline    *time.Time `json:"deadline" db:"deadline"`
+	CharacterID      string          `json:"character_id" db:"character_id"`
+	Options          *DecisionOption `json:"options"`
+	PreviousOptions  *DecisionOption `json:"previous_options" db:"previous_options"`   // 上一个决策选项
+	PreviousDecision *int8           `json:"previous_decision" db:"previous_decision"` // 上一个决策 1: conservative, 2: moderate, 3: aggressive
+	CreatedAt        int64           `json:"created_at" db:"created_at"`
+	UpdatedAt        int64           `json:"updated_at" db:"updated_at"`
 }
 
+// DecisionOption 决策选项
 type DecisionOption struct {
-    OptionID    string    `json:"option_id"`
-    Text        string    `json:"text"`
-    Consequences string  `json:"consequences"`
-    Requirements map[string]int `json:"requirements"`
+	Conservative DecisionDetails `json:"conservative"` // 保守选项
+	Moderate     DecisionDetails `json:"moderate"`     // 中庸选项
+	Aggressive   DecisionDetails `json:"aggressive"`   // 激进选项
 }
 ```
 

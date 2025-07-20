@@ -28,6 +28,7 @@ const (
 	ErrCodeGameSessionNotFound = 4001
 	ErrCodeGameActionFailed    = 4002
 	ErrCodeInvalidGameState    = 4003
+	ErrCodeNeedCreateCharacter = 4004
 
 	// 邮件相关错误代码 (5xxx)
 	ErrCodeEmailSendFailed     = 5001

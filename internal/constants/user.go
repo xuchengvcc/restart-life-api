@@ -15,18 +15,10 @@ const (
 	MaxBioLength      = 500
 )
 
-// 性别常量
-const (
-	GenderUnknown = 0
-	GenderMale    = 1
-	GenderFemale  = 2
-	GenderOther   = 3
-)
-
 // 用户状态常量
 const (
-	UserStatusInactive = 0
-	UserStatusActive   = 1
+	UserStatusInactive  = 0
+	UserStatusActive    = 1
 	UserStatusSuspended = 2
 	UserStatusDeleted   = 3
 )

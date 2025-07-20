@@ -130,29 +130,6 @@ type CharacterSummary struct {
 	Summary       *string             `json:"summary,omitempty"` // 游戏总结，简要描述角色的一生经历、成就等
 }
 
-// GenderType 性别类型
-type GenderType int
-
-const (
-	GenderUnknown GenderType = 0
-	GenderMale    GenderType = 1
-	GenderFemale  GenderType = 2
-	GenderOther   GenderType = 3
-)
-
-// RaceType 种族类型
-type RaceType int
-
-const (
-	RaceUnknown   RaceType = 0
-	RaceCaucasian RaceType = 1 // 白人
-	RaceAsian     RaceType = 2 // 黄种人
-	RaceAfrican   RaceType = 3 // 黑人
-	RaceHispanic  RaceType = 4 // 拉丁裔
-	RaceNative    RaceType = 5 // 原住民
-	RaceMixed     RaceType = 6 // 混血
-)
-
 // LifeStageType 人生阶段类型
 type LifeStageType string
 
@@ -164,40 +141,6 @@ const (
 	LifeStageOldAge      LifeStageType = "old_age"     // 老年（60+）
 	LifeStageDeath       LifeStageType = "death"       // 死亡
 )
-
-// GetGenderString 获取性别字符串
-func (g GenderType) String() string {
-	switch g {
-	case GenderMale:
-		return "male"
-	case GenderFemale:
-		return "female"
-	case GenderOther:
-		return "other"
-	default:
-		return "unknown"
-	}
-}
-
-// GetRaceString 获取种族字符串
-func (r RaceType) String() string {
-	switch r {
-	case RaceCaucasian:
-		return "caucasian"
-	case RaceAsian:
-		return "asian"
-	case RaceAfrican:
-		return "african"
-	case RaceHispanic:
-		return "hispanic"
-	case RaceNative:
-		return "native"
-	case RaceMixed:
-		return "mixed"
-	default:
-		return "unknown"
-	}
-}
 
 // GetLifeStageByAge 根据年龄获取人生阶段
 func GetLifeStageByAge(age int) LifeStageType {
