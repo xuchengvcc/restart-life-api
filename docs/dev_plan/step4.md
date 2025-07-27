@@ -13,7 +13,7 @@
 - **预计时间**: 4-5天
 
 #### 开发目标
-- [ ] Redis缓存策略优化  
+- [ ] Redis缓存策略优化
 - [ ] 数据库查询优化
 - [ ] API响应时间优化
 - [ ] 内存使用优化
@@ -74,8 +74,8 @@ CREATE TABLE events_2024 PARTITION OF events FOR VALUES FROM ('2024-01-01') TO (
 CREATE TABLE events_2025 PARTITION OF events FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
 
 -- 查询优化
-EXPLAIN ANALYZE SELECT * FROM character_tab c 
-JOIN character_attributes ca ON c.character_id = ca.character_id 
+EXPLAIN ANALYZE SELECT * FROM character_tab c
+JOIN character_attributes ca ON c.character_id = ca.character_id
 WHERE c.user_id = $1 AND c.is_active = true;
 ```
 
@@ -198,7 +198,7 @@ groups:
         annotations:
           summary: "高错误率告警"
           description: "API错误率超过10%"
-          
+
       - alert: SlowResponse
         expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
         for: 5m
@@ -362,7 +362,7 @@ spec:
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /ready
+            path: /health/ready
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
@@ -491,10 +491,10 @@ go tool pprof mem.prof
 // 监控指标测试
 func TestMetricsCollection(t *testing.T) {
     collector := NewMetricsCollector()
-    
+
     // 模拟API调用
     collector.RecordRequest("GET", "/api/v1/characters", 200, time.Millisecond*150)
-    
+
     // 验证指标收集
     assert.Equal(t, 1, collector.RequestCount("GET", "/api/v1/characters"))
 }
@@ -559,7 +559,7 @@ resources:
     limits:
       cpu: 500m
       memory: 512Mi
-  
+
   postgres:
     requests:
       cpu: 200m
@@ -625,4 +625,4 @@ docs/
 ---
 
 *创建时间: 2025-01-26*
-*最后更新: 2025-01-26* 
+*最后更新: 2025-01-26*

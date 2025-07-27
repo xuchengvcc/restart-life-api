@@ -17,8 +17,8 @@ func DefaultLoggerConfig() LoggerConfig {
 	return LoggerConfig{
 		SkipPaths: []string{
 			"/health",
-			"/ping",
-			"/metrics",
+			"/health/ping",
+			"/health/metrics",
 		},
 	}
 }

@@ -126,7 +126,7 @@ func (h *HealthHandler) Health(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} PingResponse
-// @Router /ping [get]
+// @Router /health/ping [get]
 func (h *HealthHandler) Ping(c *gin.Context) {
 	response := PingResponse{
 		Message:   "pong",
@@ -143,7 +143,7 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} ReadyResponse
-// @Router /ready [get]
+// @Router /health/ready [get]
 func (h *HealthHandler) Ready(c *gin.Context) {
 	// 检查服务是否准备就绪
 	// 这里可以添加更复杂的就绪检查逻辑
@@ -175,7 +175,7 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} VersionResponse
-// @Router /version [get]
+// @Router /health/version [get]
 func (h *HealthHandler) Version(c *gin.Context) {
 	response := VersionResponse{
 		Service:   "restart-life-api",
@@ -195,7 +195,7 @@ func (h *HealthHandler) Version(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {object} map[string]interface{}
-// @Router /metrics [get]
+// @Router /health/metrics [get]
 func (h *HealthHandler) Metrics(c *gin.Context) {
 	uptime := time.Since(h.startTime)
 

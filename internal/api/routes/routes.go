@@ -153,10 +153,12 @@ func setupHealthRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 
 	// 健康检查路由
 	r.GET("/health", healthHandler.Health)
-	r.GET("/ping", healthHandler.Ping)
-	r.GET("/ready", healthHandler.Ready)
-	r.GET("/version", healthHandler.Version)
-	r.GET("/metrics", healthHandler.Metrics)
+	{
+		health.GET("/ping", healthHandler.Ping)
+		health.GET("/ready", healthHandler.Ready)
+		health.GET("/version", healthHandler.Version)
+		health.GET("/metrics", healthHandler.Metrics)
+	}
 
 	// 环境信息路由（带配置注入）
 	health.GET("/env", healthHandler.Environment)

@@ -13,6 +13,9 @@ type EmailService interface {
 	// SendVeriCode 发送验证码邮件
 	SendVeriCode(to string, code int32) error
 
+	// SendNotificationEmail 发送通知邮件（HTML格式）
+	SendNotificationEmail(to string, subject string, htmlBody string) error
+
 	// ValidateEmailConfig 验证邮件配置是否正确
 	ValidateEmailConfig() error
 }

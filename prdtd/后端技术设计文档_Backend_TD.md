@@ -292,7 +292,7 @@ type Character struct {
     IsActive      bool                   `json:"is_active" db:"is_active"`
     CreatedAt     time.Time              `json:"created_at" db:"created_at"`
     UpdatedAt     time.Time              `json:"updated_at" db:"updated_at"`
-    
+
     // 关联数据
     Attributes    *CharacterAttributes   `json:"attributes,omitempty"`
     Health        *CharacterHealth       `json:"health,omitempty"`
@@ -393,7 +393,7 @@ func GenerateToken(userID, username, platform string) (string, error) {
             IssuedAt:  jwt.NewNumericDate(time.Now()),
         },
     }
-    
+
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
     return token.SignedString([]byte(jwtSecret))
 }
@@ -525,29 +525,29 @@ type CORSConfig struct {
 func CORSMiddleware(config CORSConfig) gin.HandlerFunc {
     return func(c *gin.Context) {
         origin := c.Request.Header.Get("Origin")
-        
+
         // 检查Origin是否被允许
         if isOriginAllowed(origin, config.AllowOrigins) {
             c.Header("Access-Control-Allow-Origin", origin)
         }
-        
+
         c.Header("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
         c.Header("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
         c.Header("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ", "))
-        
+
         if config.AllowCredentials {
             c.Header("Access-Control-Allow-Credentials", "true")
         }
-        
+
         if config.MaxAge > 0 {
             c.Header("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
         }
-        
+
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(http.StatusNoContent)
             return
         }
-        
+
         c.Next()
     }
 }
@@ -599,7 +599,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 调用微信API获取session_key和openid
     sessionData, err := h.wechatService.Code2Session(req.Code)
     if err != nil {
@@ -610,7 +610,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 查找或创建用户
     user, err := h.authService.FindOrCreateWeChatUser(sessionData.OpenID, sessionData.UnionID)
     if err != nil {
@@ -620,7 +620,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 生成JWT令牌
     token, err := h.authService.GenerateToken(user.ID.String(), user.Username, "wechat")
     if err != nil {
@@ -630,7 +630,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     response := UniversalLoginResponse{
         AccessToken: token,
         TokenType:   "Bearer",
@@ -641,7 +641,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
             OpenID:   sessionData.OpenID,
         },
     }
-    
+
     c.JSON(http.StatusOK, response)
 }
 ```
@@ -656,7 +656,7 @@ type UnityGameData struct {
     Events         []Event                  `json:"events"`
     Achievements   []Achievement            `json:"achievements"`
     Settings       *ClientSettings          `json:"settings"`
-    
+
     // Unity特定字段
     AssetVersion   string                   `json:"asset_version"`
     ClientVersion  string                   `json:"client_version"`
@@ -667,7 +667,7 @@ type UnityGameData struct {
 func (h *GameHandler) UnityDataSync(c *gin.Context) {
     userID := c.GetString("user_id")
     characterID := c.Param("character_id")
-    
+
     // 获取完整游戏数据
     gameData, err := h.gameService.GetCompleteGameData(userID, characterID)
     if err != nil {
@@ -677,7 +677,7 @@ func (h *GameHandler) UnityDataSync(c *gin.Context) {
         })
         return
     }
-    
+
     // Unity专用格式化
     unityData := UnityGameData{
         Character:      gameData.Character,
@@ -689,7 +689,7 @@ func (h *GameHandler) UnityDataSync(c *gin.Context) {
         ClientVersion:  getMinimumClientVersion(),
         Platform:       "unity",
     }
-    
+
     c.JSON(http.StatusOK, unityData)
 }
 ```
@@ -726,10 +726,10 @@ const (
 func ErrorHandlingMiddleware() gin.HandlerFunc {
     return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
         err := recovered.(error)
-        
+
         traceID := c.GetString("trace_id")
         platform := c.GetHeader("X-Platform")
-        
+
         errorResponse := ErrorResponse{
             Code:      ErrCodeInternalError,
             Message:   "服务器内部错误",
@@ -739,7 +739,7 @@ func ErrorHandlingMiddleware() gin.HandlerFunc {
             Method:    c.Request.Method,
             Platform:  platform,
         }
-        
+
         // 根据错误类型设置不同的状态码和消息
         switch e := err.(type) {
         case *ValidationError:
@@ -776,7 +776,7 @@ func APIVersionMiddleware() gin.HandlerFunc {
         if version == "" {
             version = "v1" // 默认版本
         }
-        
+
         c.Set("api_version", version)
         c.Header("API-Version", version)
         c.Next()
@@ -790,7 +790,7 @@ func RegisterVersionedRoutes(r *gin.Engine) {
         v1.Use(APIVersionMiddleware())
         registerV1Routes(v1)
     }
-    
+
     v2 := r.Group("/api/v2")
     {
         v2.Use(APIVersionMiddleware())
@@ -813,18 +813,18 @@ type RateLimitConfig struct {
 func RateLimitMiddleware(config RateLimitConfig, redis *redis.Client) gin.HandlerFunc {
     return func(c *gin.Context) {
         key := generateRateLimitKey(c, config.KeyPrefix)
-        
+
         current, err := redis.Incr(context.Background(), key).Result()
         if err != nil {
             logger.Error("Rate limit check failed", "error", err)
             c.Next()
             return
         }
-        
+
         if current == 1 {
             redis.Expire(context.Background(), key, time.Minute)
         }
-        
+
         if current > int64(config.RequestsPerMinute) {
             c.JSON(http.StatusTooManyRequests, ErrorResponse{
                 Code:    "RATE_LIMITED",
@@ -833,12 +833,12 @@ func RateLimitMiddleware(config RateLimitConfig, redis *redis.Client) gin.Handle
             c.Abort()
             return
         }
-        
+
         // 设置响应头
         c.Header("X-RateLimit-Limit", strconv.Itoa(config.RequestsPerMinute))
         c.Header("X-RateLimit-Remaining", strconv.FormatInt(int64(config.RequestsPerMinute)-current, 10))
         c.Header("X-RateLimit-Reset", strconv.FormatInt(time.Now().Add(time.Minute).Unix(), 10))
-        
+
         c.Next()
     }
 }
@@ -849,7 +849,7 @@ func generateRateLimitKey(c *gin.Context, prefix string) string {
     if userID != "" {
         return fmt.Sprintf("%s:user:%s", prefix, userID)
     }
-    
+
     clientIP := c.ClientIP()
     return fmt.Sprintf("%s:ip:%s", prefix, clientIP)
 }
@@ -863,28 +863,28 @@ func SetupMultiPlatformMiddleware(r *gin.Engine, config *Config) {
     // 基础中间件
     r.Use(gin.Logger())
     r.Use(gin.Recovery())
-    
+
     // 安全中间件
     r.Use(SecurityHeadersMiddleware())
-    
+
     // CORS支持
     r.Use(CORSMiddleware(DefaultCORSConfig()))
-    
+
     // 请求ID和追踪
     r.Use(TraceIDMiddleware())
-    
+
     // 错误处理
     r.Use(ErrorHandlingMiddleware())
-    
+
     // 限流
     r.Use(RateLimitMiddleware(config.RateLimit, config.Redis))
-    
+
     // 内容验证
     r.Use(ValidationMiddleware())
-    
+
     // API版本控制
     r.Use(APIVersionMiddleware())
-    
+
     // 平台检测
     r.Use(PlatformDetectionMiddleware())
 }
@@ -897,7 +897,7 @@ func PlatformDetectionMiddleware() gin.HandlerFunc {
             userAgent := c.GetHeader("User-Agent")
             platform = detectPlatformFromUserAgent(userAgent)
         }
-        
+
         c.Set("platform", platform)
         c.Next()
     }
@@ -994,29 +994,29 @@ type CORSConfig struct {
 func CORSMiddleware(config CORSConfig) gin.HandlerFunc {
     return func(c *gin.Context) {
         origin := c.Request.Header.Get("Origin")
-        
+
         // 检查Origin是否被允许
         if isOriginAllowed(origin, config.AllowOrigins) {
             c.Header("Access-Control-Allow-Origin", origin)
         }
-        
+
         c.Header("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
         c.Header("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
         c.Header("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ", "))
-        
+
         if config.AllowCredentials {
             c.Header("Access-Control-Allow-Credentials", "true")
         }
-        
+
         if config.MaxAge > 0 {
             c.Header("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
         }
-        
+
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(http.StatusNoContent)
             return
         }
-        
+
         c.Next()
     }
 }
@@ -1061,7 +1061,7 @@ func APIVersionMiddleware() gin.HandlerFunc {
         if version == "" {
             version = "v1" // 默认版本
         }
-        
+
         c.Set("api_version", version)
         c.Header("API-Version", version)
         c.Next()
@@ -1075,7 +1075,7 @@ func RegisterVersionedRoutes(r *gin.Engine) {
         v1.Use(APIVersionMiddleware())
         registerV1Routes(v1)
     }
-    
+
     v2 := r.Group("/api/v2")
     {
         v2.Use(APIVersionMiddleware())
@@ -1092,18 +1092,18 @@ func ContentNegotiationMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         accept := c.GetHeader("Accept")
         contentType := c.GetHeader("Content-Type")
-        
+
         // 支持的内容类型
         supportedTypes := []string{
             "application/json",
             "application/xml",
             "text/plain",
         }
-        
+
         // 确定响应格式
         responseFormat := negotiateContent(accept, supportedTypes)
         c.Set("response_format", responseFormat)
-        
+
         // 验证请求格式
         if !isContentTypeSupported(contentType, supportedTypes) {
             c.JSON(http.StatusUnsupportedMediaType, ErrorResponse{
@@ -1113,7 +1113,7 @@ func ContentNegotiationMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         c.Next()
     }
 }
@@ -1121,7 +1121,7 @@ func ContentNegotiationMiddleware() gin.HandlerFunc {
 // 响应格式化函数
 func FormatResponse(c *gin.Context, data interface{}) {
     format := c.GetString("response_format")
-    
+
     switch format {
     case "application/xml":
         c.XML(http.StatusOK, data)
@@ -1167,10 +1167,10 @@ const (
 func ErrorHandlingMiddleware() gin.HandlerFunc {
     return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
         err := recovered.(error)
-        
+
         traceID := c.GetString("trace_id")
         platform := c.GetHeader("X-Platform")
-        
+
         errorResponse := ErrorResponse{
             Code:      ErrCodeInternalError,
             Message:   "服务器内部错误",
@@ -1180,7 +1180,7 @@ func ErrorHandlingMiddleware() gin.HandlerFunc {
             Method:    c.Request.Method,
             Platform:  platform,
         }
-        
+
         // 根据错误类型设置不同的状态码和消息
         switch e := err.(type) {
         case *ValidationError:
@@ -1226,7 +1226,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 调用微信API获取session_key和openid
     sessionData, err := h.wechatService.Code2Session(req.Code)
     if err != nil {
@@ -1237,7 +1237,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 查找或创建用户
     user, err := h.authService.FindOrCreateWeChatUser(sessionData.OpenID, sessionData.UnionID)
     if err != nil {
@@ -1247,7 +1247,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     // 生成JWT令牌
     token, err := h.authService.GenerateToken(user.ID.String(), user.Username, "wechat")
     if err != nil {
@@ -1257,7 +1257,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
         })
         return
     }
-    
+
     response := UniversalLoginResponse{
         AccessToken: token,
         TokenType:   "Bearer",
@@ -1268,7 +1268,7 @@ func (h *AuthHandler) WeChatMiniProgramLogin(c *gin.Context) {
             OpenID:   sessionData.OpenID,
         },
     }
-    
+
     c.JSON(http.StatusOK, response)
 }
 ```
@@ -1283,7 +1283,7 @@ type UnityGameData struct {
     Events         []Event                  `json:"events"`
     Achievements   []Achievement            `json:"achievements"`
     Settings       *ClientSettings          `json:"settings"`
-    
+
     // Unity特定字段
     AssetVersion   string                   `json:"asset_version"`
     ClientVersion  string                   `json:"client_version"`
@@ -1294,7 +1294,7 @@ type UnityGameData struct {
 func (h *GameHandler) UnityDataSync(c *gin.Context) {
     userID := c.GetString("user_id")
     characterID := c.Param("character_id")
-    
+
     // 获取完整游戏数据
     gameData, err := h.gameService.GetCompleteGameData(userID, characterID)
     if err != nil {
@@ -1304,7 +1304,7 @@ func (h *GameHandler) UnityDataSync(c *gin.Context) {
         })
         return
     }
-    
+
     // Unity专用格式化
     unityData := UnityGameData{
         Character:      gameData.Character,
@@ -1316,7 +1316,7 @@ func (h *GameHandler) UnityDataSync(c *gin.Context) {
         ClientVersion:  getMinimumClientVersion(),
         Platform:       "unity",
     }
-    
+
     c.JSON(http.StatusOK, unityData)
 }
 ```
@@ -1337,18 +1337,18 @@ type RateLimitConfig struct {
 func RateLimitMiddleware(config RateLimitConfig, redis *redis.Client) gin.HandlerFunc {
     return func(c *gin.Context) {
         key := generateRateLimitKey(c, config.KeyPrefix)
-        
+
         current, err := redis.Incr(context.Background(), key).Result()
         if err != nil {
             logger.Error("Rate limit check failed", "error", err)
             c.Next()
             return
         }
-        
+
         if current == 1 {
             redis.Expire(context.Background(), key, time.Minute)
         }
-        
+
         if current > int64(config.RequestsPerMinute) {
             c.JSON(http.StatusTooManyRequests, ErrorResponse{
                 Code:    "RATE_LIMITED",
@@ -1357,12 +1357,12 @@ func RateLimitMiddleware(config RateLimitConfig, redis *redis.Client) gin.Handle
             c.Abort()
             return
         }
-        
+
         // 设置响应头
         c.Header("X-RateLimit-Limit", strconv.Itoa(config.RequestsPerMinute))
         c.Header("X-RateLimit-Remaining", strconv.FormatInt(int64(config.RequestsPerMinute)-current, 10))
         c.Header("X-RateLimit-Reset", strconv.FormatInt(time.Now().Add(time.Minute).Unix(), 10))
-        
+
         c.Next()
     }
 }
@@ -1373,7 +1373,7 @@ func generateRateLimitKey(c *gin.Context, prefix string) string {
     if userID != "" {
         return fmt.Sprintf("%s:user:%s", prefix, userID)
     }
-    
+
     clientIP := c.ClientIP()
     return fmt.Sprintf("%s:ip:%s", prefix, clientIP)
 }
@@ -1394,7 +1394,7 @@ func ValidationMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         // 验证User-Agent
         userAgent := c.GetHeader("User-Agent")
         if !isValidUserAgent(userAgent) {
@@ -1405,7 +1405,7 @@ func ValidationMiddleware() gin.HandlerFunc {
             c.Abort()
             return
         }
-        
+
         c.Next()
     }
 }
@@ -1464,7 +1464,7 @@ import (
     "fmt"
     "restart-life-api/internal/database"
     "time"
-    
+
     "github.com/spf13/viper"
 )
 
@@ -1502,23 +1502,23 @@ func LoadConfig(configPath string) (*Config, error) {
     viper.SetConfigType("yaml")
     viper.AddConfigPath(configPath)
     viper.AddConfigPath(".")
-    
+
     // 设置环境变量前缀
     viper.SetEnvPrefix("RESTART_LIFE")
     viper.AutomaticEnv()
-    
+
     // 设置默认值
     setDefaults()
-    
+
     if err := viper.ReadInConfig(); err != nil {
         return nil, fmt.Errorf("failed to read config file: %w", err)
     }
-    
+
     var config Config
     if err := viper.Unmarshal(&config); err != nil {
         return nil, fmt.Errorf("failed to unmarshal config: %w", err)
     }
-    
+
     return &config, nil
 }
 
@@ -1529,7 +1529,7 @@ func setDefaults() {
     viper.SetDefault("server.read_timeout", "10s")
     viper.SetDefault("server.write_timeout", "10s")
     viper.SetDefault("server.idle_timeout", "60s")
-    
+
     // Database defaults
     viper.SetDefault("database.host", "localhost")
     viper.SetDefault("database.port", 5432)
@@ -1539,18 +1539,18 @@ func setDefaults() {
     viper.SetDefault("database.max_open_conns", 25)
     viper.SetDefault("database.max_idle_conns", 5)
     viper.SetDefault("database.max_lifetime", "15m")
-    
+
     // Redis defaults
     viper.SetDefault("redis.host", "localhost")
     viper.SetDefault("redis.port", 6379)
     viper.SetDefault("redis.db", 0)
     viper.SetDefault("redis.pool_size", 10)
     viper.SetDefault("redis.min_idle_conns", 2)
-    
+
     // JWT defaults
     viper.SetDefault("jwt.expires_in", "1h")
     viper.SetDefault("jwt.refresh_in", "168h") // 7 days
-    
+
     // App defaults
     viper.SetDefault("app.name", "Restart Life API")
     viper.SetDefault("app.version", "1.0.0")
@@ -1735,7 +1735,7 @@ import (
     "encoding/json"
     "fmt"
     "time"
-    
+
     "github.com/go-redis/redis/v8"
 )
 
@@ -1774,7 +1774,7 @@ func (r *CacheRepository) Set(ctx context.Context, key string, value interface{}
     if err != nil {
         return fmt.Errorf("failed to marshal value: %w", err)
     }
-    
+
     return r.client.Set(ctx, key, data, ttl).Err()
 }
 
@@ -1787,7 +1787,7 @@ func (r *CacheRepository) Get(ctx context.Context, key string, dest interface{})
         }
         return fmt.Errorf("failed to get cache: %w", err)
     }
-    
+
     return json.Unmarshal([]byte(data), dest)
 }
 
@@ -1983,11 +1983,11 @@ http {
     # 限流配置
     limit_req_zone $binary_remote_addr zone=general:10m rate=10r/s;
     limit_req_zone $http_x_platform zone=platform:10m rate=20r/s;
-    
+
     server {
         listen 80;
         server_name api.restartlife.com;
-        
+
         # 重定向到HTTPS
         return 301 https://$server_name$request_uri;
     }
@@ -2006,11 +2006,11 @@ http {
         location ~ ^/api/v[0-9]+/platforms/(unity|web|wechat|mobile)/ {
             # 平台特定的限流
             limit_req zone=platform burst=5 nodelay;
-            
+
             # 平台检测
             set $detected_platform $1;
             proxy_set_header X-Platform $detected_platform;
-            
+
             proxy_pass http://api_servers;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -2022,7 +2022,7 @@ http {
         location /api/ {
             # 通用限流
             limit_req zone=general burst=10 nodelay;
-            
+
             # CORS预检请求
             if ($request_method = 'OPTIONS') {
                 add_header Access-Control-Allow-Origin *;
@@ -2040,12 +2040,12 @@ http {
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
-            
+
             # 设置超时
             proxy_connect_timeout 5s;
             proxy_send_timeout 60s;
             proxy_read_timeout 60s;
-            
+
             # 缓存设置
             proxy_cache_bypass $http_pragma;
             proxy_cache_revalidate on;
@@ -2055,12 +2055,12 @@ http {
         location ~* \.(unity3d|unityweb|data|symbols\.json)$ {
             add_header Access-Control-Allow-Origin *;
             add_header Access-Control-Allow-Headers Range;
-            
+
             # 支持断点续传
             proxy_set_header Range $http_range;
             proxy_set_header If-Range $http_if_range;
             proxy_no_cache $http_range $http_if_range;
-            
+
             proxy_pass http://api_servers;
         }
 
@@ -2282,7 +2282,7 @@ spec:
           periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /ready
+            path: /health/ready
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 5
@@ -2359,18 +2359,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
         go-version: 1.23.8
-    
+
     - name: Run tests
       run: |
         go mod download
         go test -v ./...
         go test -race -coverprofile=coverage.out ./...
-    
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
 
@@ -2458,7 +2458,7 @@ cors:
     - "https://miniprogram.restartlife.com"
   allowed_methods:
     - "GET"
-    - "POST" 
+    - "POST"
     - "PUT"
     - "DELETE"
     - "OPTIONS"
@@ -2489,4 +2489,4 @@ monitoring:
 
 ---
 
-*本文档为《重启人生》游戏后端技术设计文档，专注于Go服务端的多平台技术架构和实现方案。* 
+*本文档为《重启人生》游戏后端技术设计文档，专注于Go服务端的多平台技术架构和实现方案。*

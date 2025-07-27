@@ -39,6 +39,64 @@ func (s *NeteaseEmailService) SendVeriCode(to string, code int32) error {
 	return s.SendTemplatedEmail(to, template)
 }
 
+// SendNotificationEmail 发送通知邮件（HTML格式）
+func (s *NeteaseEmailService) SendNotificationEmail(to string, subject string, htmlBody string) error {
+	s.logger.WithFields(logrus.Fields{
+		"to":      to,
+		"subject": subject,
+	}).Info("starting to send notification email")
+
+	// 构建邮件内容
+	headers := map[string]string{
+		"From":         s.config.SMTPConfig.From,
+		"To":           to,
+		"Subject":      subject,
+		"MIME-Version": "1.0",
+		"Content-Type": "text/html; charset=UTF-8",
+	}
+
+	// 构建邮件头
+	message := ""
+	for k, v := range headers {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + htmlBody
+
+	// 发送邮件
+	smtpAddr := s.config.GetSMTPAddr()
+	tos := []string{to}
+	msg := []byte(message)
+
+	var err error
+	// 根据端口选择发送方式
+	if s.config.SMTPConfig.Port == "465" {
+		// SSL 连接
+		err = s.sendMailSSL(smtpAddr, s.config.SMTPConfig.From, tos, msg)
+	} else if s.config.SMTPConfig.Port == "587" {
+		// TLS 连接
+		err = s.sendMailTLS(smtpAddr, s.config.SMTPConfig.From, tos, msg)
+	} else {
+		// 普通连接
+		auth := smtp.PlainAuth("", s.config.SMTPConfig.From, s.config.SMTPConfig.Password, s.config.SMTPConfig.Server)
+		err = smtp.SendMail(smtpAddr, auth, s.config.SMTPConfig.From, tos, msg)
+	}
+
+	if err != nil {
+		s.logger.WithError(err).WithFields(logrus.Fields{
+			"smtpServer": smtpAddr,
+			"to":         to,
+			"subject":    subject,
+		}).Error("failed to send notification email")
+		return fmt.Errorf("%w: %v", constants.ErrEmailSendFailed, err)
+	}
+
+	s.logger.WithFields(logrus.Fields{
+		"to":      to,
+		"subject": subject,
+	}).Info("notification email sent successfully")
+	return nil
+}
+
 // sendMailSSL 使用SSL发送邮件
 func (s *NeteaseEmailService) sendMailSSL(addr, from string, to []string, msg []byte) error {
 	// 建立TLS连接

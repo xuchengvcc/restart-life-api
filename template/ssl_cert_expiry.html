@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL证书过期提醒</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .alert-high {
+            background-color: #fee;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .alert-medium {
+            background-color: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .alert-low {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .cert-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .cert-info h3 {
+            margin-top: 0;
+            color: #495057;
+            font-size: 18px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .value {
+            color: #495057;
+        }
+
+        .urgency-high {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .urgency-medium {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .urgency-low {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 0 10px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .tips {
+            background-color: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .tips h4 {
+            margin-top: 0;
+            color: #004085;
+        }
+
+        .tips ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .tips li {
+            margin: 5px 0;
+            color: #004085;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .info-row {
+                flex-direction: column;
+            }
+
+            .btn {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 SSL证书过期提醒</h1>
+            <p>您的SSL证书即将过期，请及时处理</p>
+        </div>
+
+        <div class="content">
+            {{if eq .AlertClass "critical"}}
+            <div class="alert-high">
+                <strong>{{.AlertIcon}} {{.AlertTitle}}</strong><br>
+                {{.AlertMessage}}
+            </div>
+            {{else if eq .AlertClass "danger"}}
+            <div class="alert-high">
+                <strong>{{.AlertIcon}} {{.AlertTitle}}</strong><br>
+                {{.AlertMessage}}
+            </div>
+            {{else if eq .AlertClass "warning"}}
+            <div class="alert-medium">
+                <strong>{{.AlertIcon}} {{.AlertTitle}}</strong><br>
+                {{.AlertMessage}}
+            </div>
+            {{else}}
+            <div class="alert-low">
+                <strong>📋 友情提醒：</strong>您的SSL证书将在 <span class="urgency-low">{{.DaysLeft}} 天</span> 后过期，请提前安排续签计划。
+            </div>
+            {{end}}
+
+            <div class="cert-info">
+                <h3>📜 证书详细信息</h3>
+                <div class="info-row">
+                    <span class="label">域名：</span>
+                    <span class="value">{{.Domain}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">颁发机构：</span>
+                    <span class="value">{{.Issuer}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">过期时间：</span>
+                    <span class="value">{{.NotAfter}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">剩余天数：</span>
+                    <span class="value" style="color: {{.DaysLeftColor}}; font-weight: bold;">{{.DaysLeft}} 天</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">检查时间：</span>
+                    <span class="value">{{.CheckTime}}</span>
+                </div>
+            </div>
+
+            <div class="tips">
+                <h4>💡 续签建议</h4>
+                <ul>
+                    <li>建议在证书过期前7-14天完成续签</li>
+                    <li>续签后请及时更新服务器配置</li>
+                    <li>可设置自动续签避免人工遗漏</li>
+                    <li>续签完成后请验证新证书是否正常工作</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="https://letsencrypt.org/" class="btn" target="_blank">Let's Encrypt 续签</a>
+                <a href="https://www.cloudflare.com/ssl/" class="btn" target="_blank">Cloudflare SSL</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                此邮件由 <strong>Restart Life API</strong> 自动发送<br>
+                监控服务器：{{.ServerInfo}}<br>
+                监控时间：{{.CheckTime}}<br>
+                如有问题，请联系系统管理员
+            </p>
+            <p>
+                <a href="mailto:admin@restart-life.com">📧 联系我们</a> |
+                <a href="https://restart-life.com">🌐 官方网站</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

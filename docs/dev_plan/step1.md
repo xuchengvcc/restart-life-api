@@ -156,7 +156,7 @@ CREATE TABLE character_tab (
 - [x] 完整的Web服务框架
 - [x] 中间件系统 (`internal/api/middleware/`)
 - [x] 配置管理模块 (`internal/config/`)
-- [x] 基础API接口 (`/health`, `/ping`, `/ready`, `/version`, `/metrics`)
+- [x] 基础API接口 (`/health`, `/health/ping`, `/health/ready`, `/health/version`, `/health/metrics`)
 - [x] 服务启动和关闭逻辑
 - [x] API路由组织和占位符处理器
 
@@ -173,9 +173,9 @@ CREATE TABLE character_tab (
 #### 健康检查接口
 ```
 GET /health      - 服务健康状态
-GET /ping        - 基础连通性检查
-GET /ready       - 服务就绪状态
-GET /metrics     - 基础指标信息
+GET /health/ping        - 基础连通性检查
+GET /health/ready       - 服务就绪状态
+GET /health/metrics     - 基础指标信息
 ```
 
 ---

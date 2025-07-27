@@ -77,6 +77,8 @@ email:
     from: your-email@163.com
   template:
     vericode: template/vericode.html
+  emails:
+    pic_email: your-email@163.com # 管理员邮箱，用于接收通知
 
 ai:
   providers:
@@ -88,3 +90,9 @@ ai:
       api_key: your-huanyuan-api-key
       model_ids:
         - hunyuan-lite
+
+# SSL证书监控配置
+ssl_monitor:
+  domain: asecondchance.cn # 监控的域名
+  check_interval: 24h # 检查间隔：24h(每天), 12h(每12小时), 1h(每小时)
+  alert_days: [14, 7, 3] # 提醒天数阈值：14天、7天、3天

@@ -13,6 +13,7 @@ import (
 	"github.com/xuchengvcc/restart-life-api/internal/api/routes"
 	"github.com/xuchengvcc/restart-life-api/internal/config"
 	"github.com/xuchengvcc/restart-life-api/internal/database"
+	"github.com/xuchengvcc/restart-life-api/internal/job"
 )
 
 func main() {
@@ -50,6 +51,14 @@ func main() {
 	container := NewContainer(cfg, db.DB, redisClient.Client)
 	logrus.Info("Dependency injection container initialized")
 
+	// 启动定时任务
+	jobManager := container.GetJobManager()
+	if err := jobManager.StartAll(); err != nil {
+		logrus.WithError(err).Error("Failed to start jobs, but continuing...")
+	} else {
+		logrus.Info("All scheduled jobs started successfully")
+	}
+
 	// 设置路由
 	r := routes.SetupRoutes(cfg, container)
 
@@ -57,7 +66,7 @@ func main() {
 	routes.SetupTestRoutes(r)
 
 	// 启动服务器
-	startServer(r, cfg)
+	startServer(r, cfg, container.GetJobManager())
 }
 
 // loadConfig 加载配置
@@ -158,7 +167,7 @@ func setNginxEnvironment(cfg *config.Config) {
 }
 
 // startServer 启动HTTP和/或HTTPS服务器
-func startServer(r http.Handler, cfg *config.Config) {
+func startServer(r http.Handler, cfg *config.Config, jobManager *job.JobManager) {
 	var servers []*http.Server
 
 	// 根据配置启动HTTP服务器
@@ -244,6 +253,11 @@ func startServer(r http.Handler, cfg *config.Config) {
 	<-quit
 
 	logrus.Info("Shutting down servers...")
+
+	// 首先停止定时任务
+	logrus.Info("Stopping scheduled jobs...")
+	jobManager.Stop()
+	logrus.Info("All scheduled jobs stopped")
 
 	// 5秒超时优雅关闭所有服务器
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

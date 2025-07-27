@@ -9,6 +9,7 @@ import (
 	"github.com/xuchengvcc/restart-life-api/internal/api/middleware"
 	"github.com/xuchengvcc/restart-life-api/internal/config"
 	"github.com/xuchengvcc/restart-life-api/internal/dao"
+	"github.com/xuchengvcc/restart-life-api/internal/job"
 	"github.com/xuchengvcc/restart-life-api/internal/repository"
 	"github.com/xuchengvcc/restart-life-api/internal/services"
 	"github.com/xuchengvcc/restart-life-api/internal/utils"
@@ -48,28 +49,29 @@ type Container struct {
 	verificationCodeRepository repository.VerificationCodeRepository
 	characterRepository        repository.CharacterRepository
 
+	// 定时任务
+	jobManager *job.JobManager
+
 	// DAO
 	userDAO             dao.UserDAO
 	verificationCodeDAO dao.VerificationCodeDAO
 	characterDAO        dao.CharacterDAO
 }
 
-// NewContainer 创建新的依赖注入容器
-func NewContainer(cfg *config.Config, db *sql.DB, redisClient *redis.Client) *Container {
+// NewContainer 创建并初始化容器
+func NewContainer(cfg *config.Config, db *sql.DB, redis *redis.Client) *Container {
 	container := &Container{
 		cfg:   cfg,
 		db:    db,
-		redis: redisClient,
+		redis: redis,
 	}
-
-	// 初始化组件
 	container.initUtils()
 	container.initDAOs()
 	container.initRepositories()
 	container.initServices()
+	container.initJobs()
 	container.initMiddlewares()
 	container.initHandlers()
-
 	return container
 }
 
@@ -125,7 +127,19 @@ func (c *Container) initServices() {
 	c.gameService = services.NewGameService(c.characterRepository, c.aiServices, c.logger, c.redis)
 }
 
-// initMiddlewares 初始化中间件
+// initJobs 初始化定时任务
+func (c *Container) initJobs() {
+	// 创建任务管理器
+	c.jobManager = job.NewJobManager(c.logger)
+
+	// 创建SSL证书监控任务
+	sslCertJob := job.NewSSLCertMonitorJob(c.logger, c.emailService, &c.cfg.Email, c.redis)
+
+	// 添加任务到管理器
+	if err := c.jobManager.AddJob(sslCertJob); err != nil {
+		c.logger.WithError(err).Error("failed to add SSL certificate monitor job")
+	}
+} // initMiddlewares 初始化中间件
 func (c *Container) initMiddlewares() {
 	c.authMiddleware = middleware.NewAuthMiddleware(c.authService, c.logger)
 }
@@ -174,4 +188,9 @@ func (c *Container) GetCharacterHandler() *handlers.CharacterHandler {
 // GetGameHandler 获取游戏处理器
 func (c *Container) GetGameHandler() *handlers.GameHandler {
 	return c.gameHandler
+}
+
+// GetJobManager 获取定时任务管理器
+func (c *Container) GetJobManager() *job.JobManager {
+	return c.jobManager
 }
