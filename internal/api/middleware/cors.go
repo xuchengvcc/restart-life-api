@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,9 @@ func CORSMiddleware(config CORSConfig) gin.HandlerFunc {
 		// 检查是否允许该来源
 		if isOriginAllowed(origin, config.AllowOrigins) {
 			c.Header("Access-Control-Allow-Origin", origin)
+		} else if len(config.AllowOrigins) > 0 && config.AllowOrigins[0] == "*" {
+			// 如果配置为允许所有来源
+			c.Header("Access-Control-Allow-Origin", "*")
 		}
 
 		// 设置允许的方法
@@ -70,7 +74,7 @@ func CORSMiddleware(config CORSConfig) gin.HandlerFunc {
 
 		// 设置预检请求缓存时间
 		if config.MaxAge > 0 {
-			c.Header("Access-Control-Max-Age", string(rune(config.MaxAge)))
+			c.Header("Access-Control-Max-Age", fmt.Sprintf("%d", config.MaxAge))
 		}
 
 		// 处理预检请求

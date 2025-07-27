@@ -39,6 +39,13 @@ func setupMiddleware(r *gin.Engine, cfg *config.Config) {
 	// 请求日志中间件
 	r.Use(middleware.LoggerMiddleware(middleware.DefaultLoggerConfig()))
 
+	// 安全头中间件
+	if cfg.Server.Mode == "release" {
+		r.Use(middleware.SecurityMiddleware(middleware.ProductionSecurityConfig()))
+	} else {
+		r.Use(middleware.SecurityMiddleware(middleware.DefaultSecurityConfig()))
+	}
+
 	// CORS中间件
 	corsConfig := middleware.CORSConfig{
 		AllowOrigins:     cfg.CORS.AllowOrigins,

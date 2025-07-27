@@ -46,17 +46,28 @@ cors:
   allow_origins:
     - "http://localhost:3000"
     - "http://localhost:8080"
+    - "http://127.0.0.1:8080"
+    - "http://43.136.39.202:8080"
+    - "https://asecondchance.cn"
+    - "https://www.asecondchance.cn"
   allow_methods:
     - GET
     - POST
     - PUT
+    - PATCH
     - DELETE
     - OPTIONS
+    - HEAD
   allow_headers:
     - Origin
     - Content-Type
     - Authorization
     - Accept
+    - X-Requested-With
+    - X-Platform
+    - X-Version
+    - Cache-Control
+    - Pragma
   allow_credentials: true
 
 rate_limit:

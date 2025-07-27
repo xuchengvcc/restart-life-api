@@ -19,6 +19,8 @@
 
 ### 前端集成
 - [frontend_white_screen_fix.md](./frontend_white_screen_fix.md) - 前端白屏问题修复
+- [frontend_forgot_password_implementation.md](./frontend_forgot_password_implementation.md) - 前端忘记密码功能实现
+- [frontend_api_path_fix.md](./frontend_api_path_fix.md) - 前端API路径修正
 
 ## 🎯 阶段目标
 - [x] JWT认证系统
