@@ -47,3 +47,8 @@ node_modules/
 dist/
 build/
 /server
+
+# 前端缓存文件（防止在根目录误创建）
+.vite/
+*.tsbuildinfo
+.turbo/
