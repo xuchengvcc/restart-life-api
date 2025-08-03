@@ -94,6 +94,9 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			}
 		}
 
+		// 公共数据接口（不需要认证）
+		v1.GET("/countries", characterHandler.GetCountries) // 获取国家列表
+
 		// 角色相关路由（需要认证）
 		characters := v1.Group("/characters")
 		characters.Use(authMiddleware.RequireAuth())

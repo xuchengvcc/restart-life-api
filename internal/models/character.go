@@ -157,3 +157,10 @@ func GetLifeStageByAge(age int) LifeStageType {
 		return LifeStageOldAge
 	}
 }
+
+// CountryOption 国家选项（用于前端下拉选择）
+type CountryOption struct {
+	Code   string `json:"code"`    // 国家代码
+	Name   string `json:"name"`    // 英文名称
+	NameCN string `json:"name_cn"` // 中文名称
+}

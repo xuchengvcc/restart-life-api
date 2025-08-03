@@ -413,3 +413,21 @@ func (h *CharacterHandler) GetCharacterAttributes(c *gin.Context) {
 		Data:    character.Attributes,
 	})
 }
+
+// GetCountries 获取国家列表
+func (h *CharacterHandler) GetCountries(c *gin.Context) {
+	// 构造响应数据
+	countries := make([]models.CountryOption, len(constants.Countries))
+	for i, country := range constants.Countries {
+		countries[i] = models.CountryOption{
+			Code:   country.Code,
+			Name:   country.Name,
+			NameCN: country.NameCN,
+		}
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    countries,
+	})
+}

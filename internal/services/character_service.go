@@ -6,6 +6,7 @@ import (
 
 	"github.com/xuchengvcc/restart-life-api/internal/models"
 	"github.com/xuchengvcc/restart-life-api/internal/repository"
+	"github.com/xuchengvcc/restart-life-api/internal/utils"
 )
 
 // CharacterService 角色服务接口
@@ -42,6 +43,17 @@ func (s *characterService) CreateCharacter(ctx context.Context, userID uint, req
 		BirthYear:     req.BirthYear,
 		Gender:        req.Gender,
 		Race:          req.Race,
+		TotalPlaytime: 0,
+	}
+
+	// 如果没有选择国家，随机选择一个（按人口权重）
+	if req.BirthCountry == "" {
+		character.BirthCountry = utils.GetRandomCountryCode()
+	}
+
+	// 如果没有选择出生年份，随机选择一个（按年龄分布权重）
+	if req.BirthYear == 0 {
+		character.BirthYear = utils.SelectRandomBirthYear()
 	}
 
 	// 生成随机属性
