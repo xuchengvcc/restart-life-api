@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"regexp"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -50,7 +51,7 @@ func NewVerificationCodeService(
 // SendVerificationCode 发送验证码
 func (s *verificationCodeService) SendVerificationCode(ctx context.Context, email, codeType string) error {
 	// 验证邮箱地址
-	if err := ValidateEmailAddress(email); err != nil {
+	if err := s.validateEmailAddress(ctx, email); err != nil {
 		return constants.ErrEmailAddressInvalid
 	}
 
@@ -102,7 +103,7 @@ func (s *verificationCodeService) SendVerificationCode(ctx context.Context, emai
 // VerifyCode 验证验证码
 func (s *verificationCodeService) VerifyCode(ctx context.Context, email, code, codeType string) error {
 	// 验证邮箱地址
-	if err := ValidateEmailAddress(email); err != nil {
+	if err := s.validateEmailAddress(ctx, email); err != nil {
 		return constants.ErrEmailAddressInvalid
 	}
 
@@ -128,7 +129,7 @@ func (s *verificationCodeService) VerifyCode(ctx context.Context, email, code, c
 // VerifyCodeAndCreateResetToken 验证验证码并创建重置令牌（两步密码重置第一步）
 func (s *verificationCodeService) VerifyCodeAndCreateResetToken(ctx context.Context, email, code string) (string, error) {
 	// 验证邮箱地址
-	if err := ValidateEmailAddress(email); err != nil {
+	if err := s.validateEmailAddress(ctx, email); err != nil {
 		return "", constants.ErrEmailAddressInvalid
 	}
 
@@ -205,4 +206,28 @@ func (s *verificationCodeService) generateResetToken() (string, error) {
 	}
 
 	return string(token), nil
+}
+
+// ValidateEmailAddress 邮箱地址验证
+func (s *verificationCodeService) validateEmailAddress(ctx context.Context, email string) error {
+	if email == "" {
+		return fmt.Errorf("邮箱地址不能为空")
+	}
+
+	// 使用正则表达式验证邮箱格式
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(email) {
+		return fmt.Errorf("邮箱地址格式无效")
+	}
+
+	// 检查该邮箱是否在数据库中存在
+	exists, err := s.codeRepo.CheckEmailExistsInDatabase(ctx, email)
+	if err != nil {
+		return fmt.Errorf("验证邮箱地址时出错，请稍后再试: %v", err)
+	}
+	if !exists {
+		return fmt.Errorf("邮箱地址不存在")
+	}
+
+	return nil
 }

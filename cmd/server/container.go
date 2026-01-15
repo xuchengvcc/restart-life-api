@@ -85,7 +85,7 @@ func (c *Container) initUtils() {
 // initDAOs 初始化数据访问对象
 func (c *Container) initDAOs() {
 	c.userDAO = dao.NewUserDAO(c.db)
-	c.verificationCodeDAO = *dao.NewVerificationCodeDAO(c.redis)
+	c.verificationCodeDAO = *dao.NewVerificationCodeDAO(c.redis, c.db)
 	c.characterDAO = dao.NewCharacterDAO(c.db)
 }
 

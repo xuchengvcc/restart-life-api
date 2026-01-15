@@ -18,6 +18,7 @@ type VerificationCodeRepository interface {
 	CreatePasswordResetToken(ctx context.Context, email, token string, ttl time.Duration) error
 	GetEmailByResetToken(ctx context.Context, token string) (string, error)
 	DeletePasswordResetToken(ctx context.Context, token string) error
+	CheckEmailExistsInDatabase(ctx context.Context, email string) (bool, error)
 }
 
 // verificationCodeRepository 验证码仓库实现
@@ -75,4 +76,9 @@ func (r *verificationCodeRepository) GetEmailByResetToken(ctx context.Context, t
 // DeletePasswordResetToken 删除密码重置令牌
 func (r *verificationCodeRepository) DeletePasswordResetToken(ctx context.Context, token string) error {
 	return r.dao.DeletePasswordResetToken(ctx, token)
+}
+
+// CheckEmailExistsInDatabase 检查邮箱是否存在于数据库中
+func (r *verificationCodeRepository) CheckEmailExistsInDatabase(ctx context.Context, email string) (bool, error) {
+	return r.dao.CheckEmailExistsInDatabase(ctx, email)
 }

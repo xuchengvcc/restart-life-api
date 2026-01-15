@@ -2,8 +2,11 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
+
+	"database/sql"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -11,12 +14,14 @@ import (
 // VerificationCodeDAO 验证码数据访问对象（基于Redis）
 type VerificationCodeDAO struct {
 	rdb *redis.Client
+	db  *sql.DB
 }
 
 // NewVerificationCodeDAO 创建验证码DAO
-func NewVerificationCodeDAO(rdb *redis.Client) *VerificationCodeDAO {
+func NewVerificationCodeDAO(rdb *redis.Client, db *sql.DB) *VerificationCodeDAO {
 	return &VerificationCodeDAO{
 		rdb: rdb,
+		db:  db,
 	}
 }
 
@@ -140,4 +145,16 @@ func (dao *VerificationCodeDAO) GetEmailByResetToken(ctx context.Context, token 
 func (dao *VerificationCodeDAO) DeletePasswordResetToken(ctx context.Context, token string) error {
 	key := fmt.Sprintf("password_reset_token:%s", token)
 	return dao.rdb.Del(ctx, key).Err()
+}
+
+func (dao *VerificationCodeDAO) CheckEmailExistsInDatabase(ctx context.Context, email string) (bool, error) {
+	row := dao.db.QueryRowContext(ctx, "SELECT 1 FROM users WHERE email = ? LIMIT 1", email)
+	var dummy int
+	if err := row.Scan(&dummy); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to check email existence: %w", err)
+	}
+	return true, nil
 }
