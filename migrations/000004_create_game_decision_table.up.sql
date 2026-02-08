@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS game_decision (
     created_at BIGINT UNSIGNED NOT NULL COMMENT '创建时间（毫秒时间戳）',
     updated_at BIGINT UNSIGNED NOT NULL COMMENT '更新时间（毫秒时间戳）',
     FOREIGN KEY (character_id) REFERENCES character_tab(character_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

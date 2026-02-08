@@ -50,7 +50,5 @@ CREATE TABLE IF NOT EXISTS character_tab (
     death_cause VARCHAR(200),
     summary TEXT COMMENT '游戏总结，简要描述角色的一生经历、成就等',
 
-    -- 外键约束和索引
-    FOREIGN KEY (user_id) REFERENCES user_tab(user_id) ON DELETE CASCADE,
     INDEX idx_character_user_id (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS game_events (
     created_at BIGINT UNSIGNED NOT NULL COMMENT '创建时间（毫秒时间戳）',
     INDEX idx_event_character_id (character_id),
     INDEX idx_event_character_age (character_id, age)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

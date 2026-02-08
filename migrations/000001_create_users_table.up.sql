@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS user_tab (
     birth_date DATE COMMENT '出生日期',
     gender TINYINT COMMENT '性别 0:未知 1:男 2:女 3:其他',
     country VARCHAR(100) COMMENT '国家'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户账户表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户账户表';
 
 -- 注意：username 和 email 字段的 UNIQUE 约束会自动创建索引，无需手动创建
