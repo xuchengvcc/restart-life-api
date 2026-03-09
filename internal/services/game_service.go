@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -370,7 +371,7 @@ func (s *gameService) processGameProgressWithAI(ctx context.Context, character *
 	// 解析AI响应
 	response, err := s.parseGameProgressResponse(aiText)
 	if err != nil {
-		return nil, fmt.Errorf("AI响应解析失败: %w", err)
+		return nil, fmt.Errorf("AI响应解析失败: %w, AI response: %s", err, aiText)
 	}
 
 	return response, nil
@@ -502,14 +503,14 @@ func (s *gameService) applyGameProgressResponse(gameState *models.GameState, cha
 
 // callAIService 调用AI服务
 func (s *gameService) callAIService(ctx context.Context, prompt string) (string, error) {
-	// 优先使用 Gemini 服务
-	if gemini, exists := s.aiServices["gemini"]; exists {
-		return gemini.GenerateText(ctx, prompt)
-	}
-
-	// 备选方案：使用 Hunyuan 服务
+	// 优先使用 Hunyuan 服务
 	if hunyuan, exists := s.aiServices["hunyuan"]; exists {
 		return hunyuan.GenerateText(ctx, prompt)
+	}
+
+	// 备选方案：使用 Gemini 服务
+	if gemini, exists := s.aiServices["gemini"]; exists {
+		return gemini.GenerateText(ctx, prompt)
 	}
 
 	return "", fmt.Errorf("没有可用的AI服务")
@@ -791,12 +792,36 @@ func (s *gameService) buildCurrentDecisionInfo(gameState *models.GameState, opti
 
 // parseGameProgressResponse 解析统一的AI游戏进程响应
 func (s *gameService) parseGameProgressResponse(aiText string) (*AIGameProgressResponse, error) {
+	clean := sanitizeAIJSON(aiText)
 	var response AIGameProgressResponse
-	err := json.Unmarshal([]byte(aiText), &response)
+	err := json.Unmarshal([]byte(clean), &response)
 	if err != nil {
 		return nil, fmt.Errorf("JSON解析失败: %w", err)
 	}
 	return &response, nil
+}
+
+// sanitizeAIJSON 去掉模型返回中的 Markdown 代码块包裹，并截取首尾 JSON 范围
+func sanitizeAIJSON(aiText string) string {
+	text := strings.TrimSpace(aiText)
+	if strings.HasPrefix(text, "```") {
+		text = strings.TrimPrefix(text, "```json")
+		text = strings.TrimPrefix(text, "```JSON")
+		text = strings.TrimPrefix(text, "```")
+		text = strings.TrimSpace(text)
+		if idx := strings.LastIndex(text, "```"); idx >= 0 {
+			text = strings.TrimSpace(text[:idx])
+		}
+	}
+
+	// 再次保险：截取首个 '{' 到最后一个 '}' 的部分
+	if start := strings.Index(text, "{"); start >= 0 {
+		if end := strings.LastIndex(text, "}"); end >= start {
+			text = text[start : end+1]
+		}
+	}
+
+	return text
 }
 
 // 降级处理方法

@@ -89,14 +89,14 @@ email:
 
 ai:
   providers:
+    - name: hunyuan
+      api_key: your-hunyuan-api-key
+      model_ids:
+        - hunyuan-lite
     - name: gemini
       api_key: your-gemini-api-key
       model_ids:
         - gemini-2.0-flash-lite
-    - name: huanyuan
-      api_key: your-huanyuan-api-key
-      model_ids:
-        - hunyuan-lite
 
 # SSL证书监控配置
 ssl_monitor:

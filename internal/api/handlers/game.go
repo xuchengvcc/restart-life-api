@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -226,8 +228,12 @@ func (h *GameHandler) AdvanceGame(c *gin.Context) {
 		"option_type":  req.OptionType,
 	}).Info("推进游戏请求")
 
+	// 为推进游戏请求设置超时，避免长时间阻塞
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
 	// 智能推进游戏
-	gameState, err := h.gameService.AdvanceGameSmart(c.Request.Context(), characterID, req.OptionType)
+	gameState, err := h.gameService.AdvanceGameSmart(ctx, characterID, req.OptionType)
 	if err != nil {
 		h.logger.WithError(err).Error("推进游戏失败")
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
