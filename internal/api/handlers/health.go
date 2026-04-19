@@ -1,29 +1,35 @@
-package handlers
+﻿package handlers
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/xuchengvcc/restart-life-api/internal/config"
 )
 
-// HealthHandler 健康检查处理器
+// HealthHandler handles health endpoints.
 type HealthHandler struct {
 	startTime time.Time
 	version   string
+	db        *sql.DB
+	redis     *redis.Client
 }
 
-// NewHealthHandler 创建健康检查处理器
-func NewHealthHandler(version string) *HealthHandler {
+// NewHealthHandler creates a new health handler.
+func NewHealthHandler(version string, db *sql.DB, redisClient *redis.Client) *HealthHandler {
 	return &HealthHandler{
 		startTime: time.Now(),
 		version:   version,
+		db:        db,
+		redis:     redisClient,
 	}
 }
 
-// HealthResponse 健康检查响应
 type HealthResponse struct {
 	Status    string            `json:"status"`
 	Timestamp int64             `json:"timestamp"`
@@ -33,20 +39,17 @@ type HealthResponse struct {
 	Checks    map[string]string `json:"checks,omitempty"`
 }
 
-// PingResponse Ping响应
 type PingResponse struct {
 	Message   string `json:"message"`
 	Timestamp int64  `json:"timestamp"`
 }
 
-// ReadyResponse 就绪检查响应
 type ReadyResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 	Ready   bool   `json:"ready"`
 }
 
-// VersionResponse 版本信息响应
 type VersionResponse struct {
 	Service   string `json:"service"`
 	Version   string `json:"version"`
@@ -55,7 +58,6 @@ type VersionResponse struct {
 	GitCommit string `json:"git_commit,omitempty"`
 }
 
-// EnvironmentResponse 环境信息响应
 type EnvironmentResponse struct {
 	Environment string `json:"environment"`
 	Mode        string `json:"mode"`
@@ -67,16 +69,41 @@ type EnvironmentResponse struct {
 	Timestamp   int64  `json:"timestamp"`
 }
 
-// Health 健康检查接口
-// @Summary 健康检查
-// @Description 检查服务健康状态
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} HealthResponse
-// @Router /health [get]
+func (h *HealthHandler) dependencyChecks() (map[string]string, bool) {
+	checks := make(map[string]string)
+	healthy := true
+
+	dbCtx, dbCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dbCancel()
+	if h.db == nil {
+		checks["database"] = "not_configured"
+		healthy = false
+	} else if err := h.db.PingContext(dbCtx); err != nil {
+		checks["database"] = "unhealthy"
+		healthy = false
+	} else {
+		checks["database"] = "healthy"
+	}
+
+	redisCtx, redisCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer redisCancel()
+	if h.redis == nil {
+		checks["redis"] = "not_configured"
+		healthy = false
+	} else if err := h.redis.Ping(redisCtx).Err(); err != nil {
+		checks["redis"] = "unhealthy"
+		healthy = false
+	} else {
+		checks["redis"] = "healthy"
+	}
+
+	return checks, healthy
+}
+
+// Health returns liveness + dependency checks.
 func (h *HealthHandler) Health(c *gin.Context) {
 	uptime := time.Since(h.startTime)
+	checks, healthy := h.dependencyChecks()
 
 	response := HealthResponse{
 		Status:    "healthy",
@@ -84,33 +111,13 @@ func (h *HealthHandler) Health(c *gin.Context) {
 		Service:   "restart-life-api",
 		Version:   h.version,
 		Uptime:    uptime.String(),
+		Checks:    checks,
 	}
 
-	// 可以在这里添加更多的健康检查
-	// 例如数据库连接、Redis连接等
-	checks := make(map[string]string)
-
-	// TODO: 添加数据库健康检查
-	// if err := h.db.HealthCheck(); err != nil {
-	//     checks["database"] = "unhealthy"
-	//     response.Status = "unhealthy"
-	// } else {
-	//     checks["database"] = "healthy"
-	// }
-
-	// TODO: 添加Redis健康检查
-	// if err := h.redis.HealthCheck(); err != nil {
-	//     checks["redis"] = "unhealthy"
-	//     response.Status = "unhealthy"
-	// } else {
-	//     checks["redis"] = "healthy"
-	// }
-
-	if len(checks) > 0 {
-		response.Checks = checks
+	if !healthy {
+		response.Status = "unhealthy"
 	}
 
-	// 根据健康状态返回相应的HTTP状态码
 	statusCode := http.StatusOK
 	if response.Status != "healthy" {
 		statusCode = http.StatusServiceUnavailable
@@ -119,14 +126,7 @@ func (h *HealthHandler) Health(c *gin.Context) {
 	c.JSON(statusCode, response)
 }
 
-// Ping 基础连通性检查
-// @Summary Ping检查
-// @Description 基础连通性检查
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} PingResponse
-// @Router /health/ping [get]
+// Ping returns a basic pong.
 func (h *HealthHandler) Ping(c *gin.Context) {
 	response := PingResponse{
 		Message:   "pong",
@@ -136,22 +136,13 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// Ready 服务就绪检查
-// @Summary 就绪检查
-// @Description 检查服务是否准备好接受请求
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} ReadyResponse
-// @Router /health/ready [get]
+// Ready checks whether required dependencies are ready.
 func (h *HealthHandler) Ready(c *gin.Context) {
-	// 检查服务是否准备就绪
-	// 这里可以添加更复杂的就绪检查逻辑
-	ready := true
+	_, ready := h.dependencyChecks()
 	message := "Service is ready to accept requests"
-
-	// TODO: 添加就绪检查逻辑
-	// 例如检查必要的依赖服务是否可用
+	if !ready {
+		message = "Service dependencies are not ready"
+	}
 
 	response := ReadyResponse{
 		Status:  "ready",
@@ -168,34 +159,19 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 	c.JSON(statusCode, response)
 }
 
-// Version 版本信息
-// @Summary 版本信息
-// @Description 获取服务版本信息
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} VersionResponse
-// @Router /health/version [get]
+// Version returns service version info.
 func (h *HealthHandler) Version(c *gin.Context) {
 	response := VersionResponse{
 		Service:   "restart-life-api",
 		Version:   h.version,
 		BuildTime: time.Now().Format(time.RFC3339),
 		GoVersion: "1.23.8",
-		// GitCommit: 可以在构建时注入Git提交哈希
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// Metrics 基础指标信息（为Prometheus等监控系统准备）
-// @Summary 基础指标
-// @Description 获取基础指标信息
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /health/metrics [get]
+// Metrics returns basic runtime metrics.
 func (h *HealthHandler) Metrics(c *gin.Context) {
 	uptime := time.Since(h.startTime)
 
@@ -204,25 +180,13 @@ func (h *HealthHandler) Metrics(c *gin.Context) {
 		"start_time":     h.startTime.Unix(),
 		"current_time":   time.Now().Unix(),
 		"version":        h.version,
-		// TODO: 添加更多指标
-		// "active_connections": getActiveConnections(),
-		// "memory_usage": getMemoryUsage(),
-		// "cpu_usage": getCPUUsage(),
 	}
 
 	c.JSON(http.StatusOK, metrics)
 }
 
-// Environment 环境信息接口
-// @Summary 环境信息检查
-// @Description 获取当前服务的环境配置信息
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} EnvironmentResponse
-// @Router /health/env [get]
+// Environment returns runtime environment info.
 func (h *HealthHandler) Environment(c *gin.Context) {
-	// 从上下文获取配置（需要在路由中设置）
 	cfg, exists := c.Get("config")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Configuration not available"})
@@ -230,8 +194,6 @@ func (h *HealthHandler) Environment(c *gin.Context) {
 	}
 
 	config := cfg.(*config.Config)
-
-	// 判断环境类型
 	environment := "test"
 	if !config.Server.EnableHTTP {
 		environment = "live"
@@ -248,7 +210,6 @@ func (h *HealthHandler) Environment(c *gin.Context) {
 		Timestamp:   time.Now().Unix(),
 	}
 
-	// 添加响应头以供nginx使用
 	c.Header("X-Environment", environment)
 	c.Header("X-Enable-HTTP", fmt.Sprintf("%t", config.Server.EnableHTTP))
 	c.Header("X-Enable-HTTPS", fmt.Sprintf("%t", config.Server.EnableHTTPS))

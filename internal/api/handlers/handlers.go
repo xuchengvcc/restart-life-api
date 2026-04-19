@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
+
+	"github.com/go-redis/redis/v8"
 	"github.com/sirupsen/logrus"
 	"github.com/xuchengvcc/restart-life-api/internal/services"
 )
@@ -19,8 +22,8 @@ func (h *Handlers) InitAuthHandlers(authService services.AuthService, verificati
 	h.AuthHandler = NewAuthHandler(authService, verificationCodeService, logger)
 }
 
-func (h *Handlers) InitHealthHandlers(version string) {
-	h.HealthHandler = NewHealthHandler(version)
+func (h *Handlers) InitHealthHandlers(version string, db *sql.DB, redisClient *redis.Client) {
+	h.HealthHandler = NewHealthHandler(version, db, redisClient)
 }
 
 func (h *Handlers) InitAIHandlers(aiServices map[string]services.AIService, logger *logrus.Logger) {

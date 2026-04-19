@@ -163,7 +163,7 @@ func (c *Container) initHandlers() {
 	c.achievementHandler = handlers.NewAchievementHandler(c.achievementStatsService, c.logger)
 	c.statsHandler = handlers.NewStatsHandler(c.achievementStatsService, c.logger)
 
-	c.healthHandler = handlers.NewHealthHandler("restart-life-api")
+	c.healthHandler = handlers.NewHealthHandler("restart-life-api", c.db, c.redis)
 }
 
 // GetAuthMiddleware 获取认证中间件
