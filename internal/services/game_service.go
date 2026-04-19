@@ -278,6 +278,15 @@ func (s *gameService) SaveGame(ctx context.Context, characterID string) error {
 	// 清除Redis缓存，确保下次获取最新状态
 	s.clearGameStateFromRedis(characterID)
 
+	// 保存后立即回读进行轻量一致性校验，避免状态漂移被静默吞掉。
+	reloadedState, err := s.LoadGame(ctx, characterID)
+	if err != nil {
+		return fmt.Errorf("save integrity reload failed: %w", err)
+	}
+	if err := s.verifyGameStateConsistency(gameState, reloadedState); err != nil {
+		return fmt.Errorf("save integrity check failed: %w", err)
+	}
+
 	s.logger.WithFields(logrus.Fields{
 		"character_id": characterID,
 	}).Info("游戏保存完成")
@@ -291,6 +300,25 @@ func (s *gameService) LoadGame(ctx context.Context, characterID string) (*models
 }
 
 // 私有辅助方法
+
+func (s *gameService) verifyGameStateConsistency(expected, actual *models.GameState) error {
+	if expected == nil || actual == nil {
+		return fmt.Errorf("game state is nil")
+	}
+	if expected.CharacterID != actual.CharacterID {
+		return fmt.Errorf("character_id mismatch: expected=%s actual=%s", expected.CharacterID, actual.CharacterID)
+	}
+	if expected.CurrentAge != actual.CurrentAge {
+		return fmt.Errorf("current_age mismatch: expected=%d actual=%d", expected.CurrentAge, actual.CurrentAge)
+	}
+	if expected.IsGameActive != actual.IsGameActive {
+		return fmt.Errorf("is_game_active mismatch: expected=%t actual=%t", expected.IsGameActive, actual.IsGameActive)
+	}
+	if (expected.PendingDecision == nil) != (actual.PendingDecision == nil) {
+		return fmt.Errorf("pending_decision presence mismatch")
+	}
+	return nil
+}
 
 func (s *gameService) getStringValue(ptr *string) string {
 	if ptr == nil {

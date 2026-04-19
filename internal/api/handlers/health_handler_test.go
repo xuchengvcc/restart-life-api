@@ -63,3 +63,29 @@ func TestPing_ReturnsPong(t *testing.T) {
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
 	require.Equal(t, "pong", resp.Message)
 }
+
+func TestMetrics_ContainsObservabilityFields(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	handler := NewHealthHandler("restart-life-api", nil, nil)
+
+	// produce a failed health request to increment error counters
+	healthRecorder := httptest.NewRecorder()
+	healthCtx, _ := gin.CreateTestContext(healthRecorder)
+	healthCtx.Request = httptest.NewRequest(http.MethodGet, "/health", nil)
+	handler.Health(healthCtx)
+	require.Equal(t, http.StatusServiceUnavailable, healthRecorder.Code)
+
+	metricsRecorder := httptest.NewRecorder()
+	metricsCtx, _ := gin.CreateTestContext(metricsRecorder)
+	metricsCtx.Request = httptest.NewRequest(http.MethodGet, "/health/metrics", nil)
+	handler.Metrics(metricsCtx)
+	require.Equal(t, http.StatusOK, metricsRecorder.Code)
+
+	var payload map[string]interface{}
+	require.NoError(t, json.Unmarshal(metricsRecorder.Body.Bytes(), &payload))
+	require.Contains(t, payload, "request_count")
+	require.Contains(t, payload, "error_count")
+	require.Contains(t, payload, "error_rate")
+	require.Contains(t, payload, "dependency_details")
+}

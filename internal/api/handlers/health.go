@@ -1,10 +1,11 @@
-﻿package handlers
+package handlers
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,14 @@ type HealthHandler struct {
 	version   string
 	db        *sql.DB
 	redis     *redis.Client
+	requests  int64
+	errors    int64
+}
+
+type DependencyCheckDetail struct {
+	Status    string `json:"status"`
+	LatencyMS int64  `json:"latency_ms"`
+	Error     string `json:"error,omitempty"`
 }
 
 // NewHealthHandler creates a new health handler.
@@ -31,12 +40,13 @@ func NewHealthHandler(version string, db *sql.DB, redisClient *redis.Client) *He
 }
 
 type HealthResponse struct {
-	Status    string            `json:"status"`
-	Timestamp int64             `json:"timestamp"`
-	Service   string            `json:"service"`
-	Version   string            `json:"version"`
-	Uptime    string            `json:"uptime"`
-	Checks    map[string]string `json:"checks,omitempty"`
+	Status       string                           `json:"status"`
+	Timestamp    int64                            `json:"timestamp"`
+	Service      string                           `json:"service"`
+	Version      string                           `json:"version"`
+	Uptime       string                           `json:"uptime"`
+	Checks       map[string]string                `json:"checks,omitempty"`
+	CheckDetails map[string]DependencyCheckDetail `json:"check_details,omitempty"`
 }
 
 type PingResponse struct {
@@ -69,49 +79,66 @@ type EnvironmentResponse struct {
 	Timestamp   int64  `json:"timestamp"`
 }
 
-func (h *HealthHandler) dependencyChecks() (map[string]string, bool) {
+func (h *HealthHandler) dependencyChecks() (map[string]string, map[string]DependencyCheckDetail, bool) {
 	checks := make(map[string]string)
+	details := make(map[string]DependencyCheckDetail)
 	healthy := true
 
+	dbStart := time.Now()
 	dbCtx, dbCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer dbCancel()
 	if h.db == nil {
 		checks["database"] = "not_configured"
+		details["database"] = DependencyCheckDetail{Status: "not_configured", LatencyMS: 0}
 		healthy = false
 	} else if err := h.db.PingContext(dbCtx); err != nil {
 		checks["database"] = "unhealthy"
+		details["database"] = DependencyCheckDetail{Status: "unhealthy", LatencyMS: time.Since(dbStart).Milliseconds(), Error: err.Error()}
 		healthy = false
 	} else {
 		checks["database"] = "healthy"
+		details["database"] = DependencyCheckDetail{Status: "healthy", LatencyMS: time.Since(dbStart).Milliseconds()}
 	}
 
+	redisStart := time.Now()
 	redisCtx, redisCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer redisCancel()
 	if h.redis == nil {
 		checks["redis"] = "not_configured"
+		details["redis"] = DependencyCheckDetail{Status: "not_configured", LatencyMS: 0}
 		healthy = false
 	} else if err := h.redis.Ping(redisCtx).Err(); err != nil {
 		checks["redis"] = "unhealthy"
+		details["redis"] = DependencyCheckDetail{Status: "unhealthy", LatencyMS: time.Since(redisStart).Milliseconds(), Error: err.Error()}
 		healthy = false
 	} else {
 		checks["redis"] = "healthy"
+		details["redis"] = DependencyCheckDetail{Status: "healthy", LatencyMS: time.Since(redisStart).Milliseconds()}
 	}
 
-	return checks, healthy
+	return checks, details, healthy
+}
+
+func (h *HealthHandler) recordRequest(statusCode int) {
+	atomic.AddInt64(&h.requests, 1)
+	if statusCode >= http.StatusBadRequest {
+		atomic.AddInt64(&h.errors, 1)
+	}
 }
 
 // Health returns liveness + dependency checks.
 func (h *HealthHandler) Health(c *gin.Context) {
 	uptime := time.Since(h.startTime)
-	checks, healthy := h.dependencyChecks()
+	checks, checkDetails, healthy := h.dependencyChecks()
 
 	response := HealthResponse{
-		Status:    "healthy",
-		Timestamp: time.Now().Unix(),
-		Service:   "restart-life-api",
-		Version:   h.version,
-		Uptime:    uptime.String(),
-		Checks:    checks,
+		Status:       "healthy",
+		Timestamp:    time.Now().Unix(),
+		Service:      "restart-life-api",
+		Version:      h.version,
+		Uptime:       uptime.String(),
+		Checks:       checks,
+		CheckDetails: checkDetails,
 	}
 
 	if !healthy {
@@ -123,6 +150,7 @@ func (h *HealthHandler) Health(c *gin.Context) {
 		statusCode = http.StatusServiceUnavailable
 	}
 
+	h.recordRequest(statusCode)
 	c.JSON(statusCode, response)
 }
 
@@ -133,12 +161,13 @@ func (h *HealthHandler) Ping(c *gin.Context) {
 		Timestamp: time.Now().Unix(),
 	}
 
+	h.recordRequest(http.StatusOK)
 	c.JSON(http.StatusOK, response)
 }
 
 // Ready checks whether required dependencies are ready.
 func (h *HealthHandler) Ready(c *gin.Context) {
-	_, ready := h.dependencyChecks()
+	_, _, ready := h.dependencyChecks()
 	message := "Service is ready to accept requests"
 	if !ready {
 		message = "Service dependencies are not ready"
@@ -156,6 +185,7 @@ func (h *HealthHandler) Ready(c *gin.Context) {
 		statusCode = http.StatusServiceUnavailable
 	}
 
+	h.recordRequest(statusCode)
 	c.JSON(statusCode, response)
 }
 
@@ -168,20 +198,35 @@ func (h *HealthHandler) Version(c *gin.Context) {
 		GoVersion: "1.23.8",
 	}
 
+	h.recordRequest(http.StatusOK)
 	c.JSON(http.StatusOK, response)
 }
 
 // Metrics returns basic runtime metrics.
 func (h *HealthHandler) Metrics(c *gin.Context) {
 	uptime := time.Since(h.startTime)
-
-	metrics := map[string]interface{}{
-		"uptime_seconds": uptime.Seconds(),
-		"start_time":     h.startTime.Unix(),
-		"current_time":   time.Now().Unix(),
-		"version":        h.version,
+	checks, details, healthy := h.dependencyChecks()
+	requests := atomic.LoadInt64(&h.requests)
+	errors := atomic.LoadInt64(&h.errors)
+	errorRate := 0.0
+	if requests > 0 {
+		errorRate = float64(errors) / float64(requests)
 	}
 
+	metrics := map[string]interface{}{
+		"uptime_seconds":     uptime.Seconds(),
+		"start_time":         h.startTime.Unix(),
+		"current_time":       time.Now().Unix(),
+		"version":            h.version,
+		"request_count":      requests,
+		"error_count":        errors,
+		"error_rate":         errorRate,
+		"dependencies":       checks,
+		"dependency_details": details,
+		"ready":              healthy,
+	}
+
+	h.recordRequest(http.StatusOK)
 	c.JSON(http.StatusOK, metrics)
 }
 
@@ -214,5 +259,6 @@ func (h *HealthHandler) Environment(c *gin.Context) {
 	c.Header("X-Enable-HTTP", fmt.Sprintf("%t", config.Server.EnableHTTP))
 	c.Header("X-Enable-HTTPS", fmt.Sprintf("%t", config.Server.EnableHTTPS))
 
+	h.recordRequest(http.StatusOK)
 	c.JSON(http.StatusOK, response)
 }

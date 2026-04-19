@@ -12,6 +12,8 @@ import (
 
 type fakeCharacterRepo struct {
 	character             *models.Character
+	characterOnNextGet    *models.Character
+	getByIDCalls          int
 	eventHistory          []models.Event
 	pendingDecision       *models.Decision
 	savedEvents           []models.Event
@@ -24,6 +26,10 @@ func (f *fakeCharacterRepo) Create(ctx context.Context, character *models.Charac
 }
 
 func (f *fakeCharacterRepo) GetByID(ctx context.Context, characterID string) (*models.Character, error) {
+	f.getByIDCalls++
+	if f.characterOnNextGet != nil && f.getByIDCalls > 1 {
+		return f.characterOnNextGet, nil
+	}
 	return f.character, nil
 }
 
@@ -194,4 +200,38 @@ func TestApplyGameProgressResponse_PersistsEventAndDecision(t *testing.T) {
 	require.Len(t, repo.savedPendingDecisions, 1)
 	require.Equal(t, int64(100), gameState.Money)
 	require.Equal(t, "year desc", gameState.LastYearDescription)
+}
+
+func TestSaveGame_DetectsPersistenceMismatch(t *testing.T) {
+	repo := &fakeCharacterRepo{
+		character: &models.Character{
+			CharacterID:   "char_1",
+			CharacterName: "test",
+			CurrentAge:    20,
+			LifeStage:     "adulthood",
+			CreatedAt:     1,
+			UpdatedAt:     2,
+			Attributes:    models.CharacterAttributes{Intelligence: 50},
+		},
+		// simulate persistence drift after save
+		characterOnNextGet: &models.Character{
+			CharacterID:   "char_1",
+			CharacterName: "test",
+			CurrentAge:    21,
+			LifeStage:     "adulthood",
+			CreatedAt:     1,
+			UpdatedAt:     3,
+			Attributes:    models.CharacterAttributes{Intelligence: 50},
+		},
+	}
+
+	svc := &gameService{
+		characterRepo: repo,
+		logger:        logrus.New(),
+		redisClient:   redis.NewClient(&redis.Options{Addr: "127.0.0.1:0"}),
+	}
+
+	err := svc.SaveGame(context.Background(), "char_1")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "save integrity check failed")
 }
