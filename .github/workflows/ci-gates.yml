@@ -1,0 +1,57 @@
+name: CI And Workflow Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.12"
+
+      - name: Run go test
+        run: go test ./...
+
+  workflow-gates:
+    name: Workflow Gate Check (Blocking)
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Optional checkout for workflow-docs repository
+        if: ${{ vars.WORKFLOW_DOCS_REPO != '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.WORKFLOW_DOCS_REPO }}
+          path: workflow-docs
+
+      - name: Ensure workflow-docs is available
+        shell: pwsh
+        run: |
+          $pathA = Join-Path $env:GITHUB_WORKSPACE "workflow-docs"
+          $pathB = Join-Path $env:GITHUB_WORKSPACE "..\workflow-docs"
+          if (-not (Test-Path $pathA) -and -not (Test-Path $pathB)) {
+            throw "workflow-docs not found. Add docs in repo root or set repository variable WORKFLOW_DOCS_REPO."
+          }
+
+      - name: Run gate check
+        shell: pwsh
+        env:
+          FEATURE_ID: restart-life-api-baseline
+        run: |
+          $pathA = Join-Path $env:GITHUB_WORKSPACE "workflow-docs"
+          $pathB = Join-Path $env:GITHUB_WORKSPACE "..\workflow-docs"
+          $workflowRoot = if (Test-Path $pathA) { $pathA } else { $pathB }
+          ./scripts/check-workflow-gates.ps1 -FeatureId $env:FEATURE_ID -WorkflowDocsRoot $workflowRoot

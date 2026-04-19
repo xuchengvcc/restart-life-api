@@ -143,3 +143,45 @@ MIT License
 - ✅ Token中间件保护
 
 详细文档: [认证系统说明](docs/auth_system.md)
+
+## Dev Environment Self-Check (A-001)
+Run one command before development to verify local prerequisites:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-check.ps1
+```
+
+Useful options:
+
+```powershell
+# Skip service probes when MySQL/Redis are not running yet
+powershell -ExecutionPolicy Bypass -File .\scripts\dev-check.ps1 -SkipMySQL -SkipRedis
+```
+
+The script checks:
+- Go version
+- Node.js + npm availability
+- MySQL TCP connectivity
+- Redis TCP connectivity
+
+Non-zero exit code means at least one required check failed.
+
+## Workflow Gate Check (A-004)
+Run workflow gate check locally:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\check-workflow-gates.ps1 -FeatureId restart-life-api-baseline -WorkflowDocsRoot ..\workflow-docs
+```
+
+CI is configured to run this gate check as a blocking job.
+
+## Script-Based Validation (No Local Test EXE)
+If your machine policy blocks generated `.exe` files during local testing, use script-based validation:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\script-test.ps1 -FeatureId restart-life-api-baseline -WorkflowDocsRoot ..\workflow-docs -SkipMySQL -SkipRedis
+```
+
+This command runs:
+- `scripts/dev-check.ps1`
+- `scripts/check-workflow-gates.ps1`
