@@ -13,4 +13,6 @@ type Container interface {
 	GetHealthHandler() *handlers.HealthHandler
 	GetCharacterHandler() *handlers.CharacterHandler
 	GetGameHandler() *handlers.GameHandler
+	GetAchievementHandler() *handlers.AchievementHandler
+	GetStatsHandler() *handlers.StatsHandler
 }

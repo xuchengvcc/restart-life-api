@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"strings"
 	"strconv"
 	"time"
 
@@ -50,21 +51,38 @@ func (h *GameHandler) StartOrResumeGame(c *gin.Context) {
 		return
 	}
 
-	userIDStr, ok := userID.(string)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, models.APIResponse{
-			Success: false,
-			Error: &models.APIError{
-				Code:    constants.ErrCodeInternalError,
-				Message: "用户ID格式错误",
-			},
-		})
-		return
-	}
-
-	// 将字符串转换为 uint64
-	userIDuint64, err := strconv.ParseUint(userIDStr, 10, 64)
-	if err != nil {
+	var userIDuint64 uint64
+	switch v := userID.(type) {
+	case uint:
+		userIDuint64 = uint64(v)
+	case uint64:
+		userIDuint64 = v
+	case int:
+		if v < 0 {
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Success: false,
+				Error: &models.APIError{
+					Code:    constants.ErrCodeInternalError,
+					Message: "用户ID格式错误",
+				},
+			})
+			return
+		}
+		userIDuint64 = uint64(v)
+	case string:
+		parsed, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.APIResponse{
+				Success: false,
+				Error: &models.APIError{
+					Code:    constants.ErrCodeInternalError,
+					Message: "用户ID格式错误",
+				},
+			})
+			return
+		}
+		userIDuint64 = parsed
+	default:
 		c.JSON(http.StatusInternalServerError, models.APIResponse{
 			Success: false,
 			Error: &models.APIError{
@@ -535,5 +553,106 @@ func (h *GameHandler) GetEventHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, models.APIResponse{
 		Success: true,
 		Data:    events,
+	})
+}
+
+type legacyDecisionRequest struct {
+	DecisionID string `json:"decision_id"`
+	OptionType string `json:"option_type"`
+}
+
+func normalizeOptionType(optionType string) string {
+	switch strings.ToLower(strings.TrimSpace(optionType)) {
+	case "conservative", "1", "option_1":
+		return "conservative"
+	case "moderate", "2", "option_2":
+		return "moderate"
+	case "aggressive", "3", "option_3":
+		return "aggressive"
+	default:
+		return ""
+	}
+}
+
+// MakeDecisionLegacy 鍏煎鏃х増 decision 璺敱锛屽皢 decision_id 鏄犲皠涓?option_type
+func (h *GameHandler) MakeDecisionLegacy(c *gin.Context) {
+	characterID := c.Param("character_id")
+	if characterID == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    constants.ErrCodeInvalidParameter,
+				Message: "瑙掕壊ID涓嶈兘涓虹┖",
+			},
+		})
+		return
+	}
+
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    constants.ErrCodePermissionDenied,
+				Message: "鐢ㄦ埛鏈璇?",
+			},
+		})
+		return
+	}
+
+	var req legacyDecisionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    constants.ErrCodeInvalidParameter,
+				Message: "鍐崇瓥鍙傛暟鏍煎紡閿欒",
+				Details: err.Error(),
+			},
+		})
+		return
+	}
+
+	optionType := normalizeOptionType(req.OptionType)
+	if optionType == "" {
+		optionType = normalizeOptionType(req.DecisionID)
+	}
+	if optionType == "" {
+		c.JSON(http.StatusBadRequest, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    constants.ErrCodeInvalidParameter,
+				Message: "option_type 或 decision_id 无效，需为 conservative/moderate/aggressive",
+			},
+		})
+		return
+	}
+
+	h.logger.WithFields(logrus.Fields{
+		"user_id":      userID,
+		"character_id": characterID,
+		"option_type":  optionType,
+	}).Info("legacy decision request")
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+
+	gameState, err := h.gameService.AdvanceGameSmart(ctx, characterID, optionType)
+	if err != nil {
+		h.logger.WithError(err).Error("legacy decision failed")
+		c.JSON(http.StatusInternalServerError, models.APIResponse{
+			Success: false,
+			Error: &models.APIError{
+				Code:    constants.ErrCodeInternalError,
+				Message: "鎵ц鍐崇瓥澶辫触",
+				Details: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.APIResponse{
+		Success: true,
+		Data:    gameState,
 	})
 }

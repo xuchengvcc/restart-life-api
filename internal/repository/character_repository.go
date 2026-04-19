@@ -20,6 +20,11 @@ type CharacterRepository interface {
 	UpdateAttributes(ctx context.Context, characterID string, attributes *models.CharacterAttributes) error
 	Delete(ctx context.Context, characterID string) error
 	IsOwner(ctx context.Context, characterID string, userID uint) (bool, error)
+	SaveGameEvent(ctx context.Context, event *models.Event) error
+	GetGameEventHistory(ctx context.Context, characterID string) ([]models.Event, error)
+	SavePendingDecision(ctx context.Context, decision *models.Decision) error
+	GetPendingDecision(ctx context.Context, characterID string) (*models.Decision, error)
+	ClearPendingDecision(ctx context.Context, characterID string) error
 	GenerateRandomAttributes() models.CharacterAttributes
 	CreateCharacterSummaries(characters []*models.Character) []models.CharacterSummary
 }
@@ -82,6 +87,31 @@ func (r *characterRepository) IsOwner(ctx context.Context, characterID string, u
 		return false, err
 	}
 	return count > 0, nil
+}
+
+// SaveGameEvent 保存游戏事件
+func (r *characterRepository) SaveGameEvent(ctx context.Context, event *models.Event) error {
+	return r.characterDAO.InsertGameEvent(ctx, event)
+}
+
+// GetGameEventHistory 获取游戏事件历史
+func (r *characterRepository) GetGameEventHistory(ctx context.Context, characterID string) ([]models.Event, error) {
+	return r.characterDAO.SelectGameEventsByCharacterID(ctx, characterID)
+}
+
+// SavePendingDecision 保存待处理决策
+func (r *characterRepository) SavePendingDecision(ctx context.Context, decision *models.Decision) error {
+	return r.characterDAO.UpsertGameDecision(ctx, decision)
+}
+
+// GetPendingDecision 获取待处理决策
+func (r *characterRepository) GetPendingDecision(ctx context.Context, characterID string) (*models.Decision, error) {
+	return r.characterDAO.SelectGameDecisionByCharacterID(ctx, characterID)
+}
+
+// ClearPendingDecision 清除待处理决策
+func (r *characterRepository) ClearPendingDecision(ctx context.Context, characterID string) error {
+	return r.characterDAO.DeleteGameDecisionByCharacterID(ctx, characterID)
 }
 
 // GenerateRandomAttributes 生成随机属性

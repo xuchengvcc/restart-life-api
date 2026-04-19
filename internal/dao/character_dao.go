@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,6 +20,11 @@ type CharacterDAO interface {
 	UpdateAttributes(ctx context.Context, characterID string, attributes *models.CharacterAttributes) error
 	Delete(ctx context.Context, characterID string) error
 	CountByUserIDAndCharacterID(ctx context.Context, userID uint, characterID string) (int, error)
+	InsertGameEvent(ctx context.Context, event *models.Event) error
+	SelectGameEventsByCharacterID(ctx context.Context, characterID string) ([]models.Event, error)
+	UpsertGameDecision(ctx context.Context, decision *models.Decision) error
+	SelectGameDecisionByCharacterID(ctx context.Context, characterID string) (*models.Decision, error)
+	DeleteGameDecisionByCharacterID(ctx context.Context, characterID string) error
 }
 
 // characterDAO MySQL角色数据访问对象实现
@@ -296,4 +302,166 @@ func (d *characterDAO) CountByUserIDAndCharacterID(ctx context.Context, userID u
 	}
 
 	return count, nil
+}
+
+// InsertGameEvent 插入游戏事件
+func (d *characterDAO) InsertGameEvent(ctx context.Context, event *models.Event) error {
+	query := `
+		INSERT INTO game_events (
+			character_id, age, description, impact, created_at
+		) VALUES (?, ?, ?, ?, ?)
+	`
+
+	result, err := d.db.ExecContext(ctx, query,
+		event.CharacterID,
+		event.Age,
+		event.Description,
+		event.Impact,
+		event.CreatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	eventID, err := result.LastInsertId()
+	if err == nil {
+		event.EventID = uint64(eventID)
+	}
+
+	return nil
+}
+
+// SelectGameEventsByCharacterID 根据角色ID查询游戏事件
+func (d *characterDAO) SelectGameEventsByCharacterID(ctx context.Context, characterID string) ([]models.Event, error) {
+	query := `
+		SELECT event_id, character_id, age, description, impact, created_at
+		FROM game_events
+		WHERE character_id = ?
+		ORDER BY age ASC, event_id ASC
+	`
+
+	rows, err := d.db.QueryContext(ctx, query, characterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := make([]models.Event, 0)
+	for rows.Next() {
+		var event models.Event
+		if err := rows.Scan(
+			&event.EventID,
+			&event.CharacterID,
+			&event.Age,
+			&event.Description,
+			&event.Impact,
+			&event.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, rows.Err()
+}
+
+// UpsertGameDecision 新增或更新待处理决策
+func (d *characterDAO) UpsertGameDecision(ctx context.Context, decision *models.Decision) error {
+	if decision == nil || decision.Options == nil {
+		return fmt.Errorf("decision options cannot be nil")
+	}
+
+	optionsJSON, err := json.Marshal(decision.Options)
+	if err != nil {
+		return err
+	}
+
+	var previousOptionsJSON []byte
+	if decision.PreviousOptions != nil {
+		previousOptionsJSON, err = json.Marshal(decision.PreviousOptions)
+		if err != nil {
+			return err
+		}
+	}
+
+	query := `
+		INSERT INTO game_decision (
+			character_id, options, previous_options, previous_decision, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			options = VALUES(options),
+			previous_options = VALUES(previous_options),
+			previous_decision = VALUES(previous_decision),
+			updated_at = VALUES(updated_at)
+	`
+
+	_, err = d.db.ExecContext(ctx, query,
+		decision.CharacterID,
+		optionsJSON,
+		previousOptionsJSON,
+		decision.PreviousDecision,
+		decision.CreatedAt,
+		decision.UpdatedAt,
+	)
+	return err
+}
+
+// SelectGameDecisionByCharacterID 查询角色待处理决策
+func (d *characterDAO) SelectGameDecisionByCharacterID(ctx context.Context, characterID string) (*models.Decision, error) {
+	query := `
+		SELECT character_id, options, previous_options, previous_decision, created_at, updated_at
+		FROM game_decision
+		WHERE character_id = ?
+	`
+
+	var decision models.Decision
+	var optionsJSON []byte
+	var previousOptionsJSON []byte
+	var previousDecision sql.NullInt64
+
+	err := d.db.QueryRowContext(ctx, query, characterID).Scan(
+		&decision.CharacterID,
+		&optionsJSON,
+		&previousOptionsJSON,
+		&previousDecision,
+		&decision.CreatedAt,
+		&decision.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	var options models.DecisionOption
+	if err := json.Unmarshal(optionsJSON, &options); err != nil {
+		return nil, err
+	}
+	decision.Options = &options
+
+	if len(previousOptionsJSON) > 0 {
+		var previousOptions models.DecisionOption
+		if err := json.Unmarshal(previousOptionsJSON, &previousOptions); err != nil {
+			return nil, err
+		}
+		decision.PreviousOptions = &previousOptions
+	}
+
+	if previousDecision.Valid {
+		val := int8(previousDecision.Int64)
+		decision.PreviousDecision = &val
+	}
+
+	return &decision, nil
+}
+
+// DeleteGameDecisionByCharacterID 删除角色待处理决策
+func (d *characterDAO) DeleteGameDecisionByCharacterID(ctx context.Context, characterID string) error {
+	query := `
+		DELETE FROM game_decision
+		WHERE character_id = ?
+	`
+	_, err := d.db.ExecContext(ctx, query, characterID)
+	return err
 }

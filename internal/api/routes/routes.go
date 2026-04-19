@@ -66,6 +66,8 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 	authMiddleware := container.GetAuthMiddleware()
 	aiHandler := container.GetAIHandler()
 	characterHandler := container.GetCharacterHandler()
+	achievementHandler := container.GetAchievementHandler()
+	statsHandler := container.GetStatsHandler()
 
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
@@ -118,10 +120,14 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 			game.POST("/start-or-resume", gameHandler.StartOrResumeGame)   // 开始或继续游戏
 			game.POST("/start/:character_id", gameHandler.StartGame)       // 兼容旧API
 			game.POST("/advance/:character_id", gameHandler.AdvanceGame)   // 推进游戏
+			game.POST("/next-turn/:character_id", gameHandler.AdvanceGame) // legacy frontend alias
+			game.POST("/decision/:character_id", gameHandler.MakeDecisionLegacy) // legacy frontend alias
 			game.GET("/state/:character_id", gameHandler.GetGameState)     // 获取游戏状态
 			game.POST("/save/:character_id", gameHandler.SaveGame)         // 保存游戏
 			game.POST("/load/:character_id", gameHandler.LoadGame)         // 加载游戏
+			game.GET("/load/:character_id", gameHandler.LoadGame)          // legacy frontend alias
 			game.GET("/events/:character_id", gameHandler.GetEventHistory) // 获取事件历史
+			game.GET("/history/:character_id", gameHandler.GetEventHistory) // legacy frontend alias
 		}
 
 		// 成就相关路由（需要认证）
@@ -129,8 +135,8 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 		achievements.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加成就路由
-			achievements.GET("/:character_id", placeholderHandler("get achievements"))
-			achievements.GET("/categories", placeholderHandler("get achievement categories"))
+			achievements.GET("/categories", achievementHandler.GetAchievementCategories)
+			achievements.GET("/:character_id", achievementHandler.GetCharacterAchievements)
 		}
 
 		// 统计相关路由（需要认证）
@@ -138,8 +144,8 @@ func setupAPIRoutes(r *gin.Engine, cfg *config.Config, container Container) {
 		stats.Use(authMiddleware.RequireAuth())
 		{
 			// TODO: 添加统计路由
-			stats.GET("/:character_id", placeholderHandler("get character stats"))
-			stats.GET("/:character_id/timeline", placeholderHandler("get timeline"))
+			stats.GET("/:character_id", statsHandler.GetCharacterStats)
+			stats.GET("/:character_id/timeline", statsHandler.GetCharacterTimeline)
 		}
 
 		ai := v1.Group("/ai")

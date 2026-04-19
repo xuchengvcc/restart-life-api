@@ -35,6 +35,8 @@ type Container struct {
 	healthHandler    *handlers.HealthHandler
 	characterHandler *handlers.CharacterHandler
 	gameHandler      *handlers.GameHandler
+	achievementHandler *handlers.AchievementHandler
+	statsHandler       *handlers.StatsHandler
 
 	// 服务
 	authService             services.AuthService
@@ -42,6 +44,7 @@ type Container struct {
 	verificationCodeService services.VerificationCodeService
 	characterService        services.CharacterService
 	gameService             services.GameService
+	achievementStatsService services.AchievementStatsService
 	aiServices              map[string]services.AIService
 
 	// 仓库
@@ -125,6 +128,7 @@ func (c *Container) initServices() {
 
 	// 游戏服务
 	c.gameService = services.NewGameService(c.characterRepository, c.aiServices, c.logger, c.redis)
+	c.achievementStatsService = services.NewAchievementStatsService(c.characterRepository, c.logger)
 }
 
 // initJobs 初始化定时任务
@@ -156,6 +160,8 @@ func (c *Container) initHandlers() {
 
 	// 游戏处理器
 	c.gameHandler = handlers.NewGameHandler(c.gameService, c.logger)
+	c.achievementHandler = handlers.NewAchievementHandler(c.achievementStatsService, c.logger)
+	c.statsHandler = handlers.NewStatsHandler(c.achievementStatsService, c.logger)
 
 	c.healthHandler = handlers.NewHealthHandler("restart-life-api")
 }
@@ -188,6 +194,16 @@ func (c *Container) GetCharacterHandler() *handlers.CharacterHandler {
 // GetGameHandler 获取游戏处理器
 func (c *Container) GetGameHandler() *handlers.GameHandler {
 	return c.gameHandler
+}
+
+// GetAchievementHandler 获取成就处理器
+func (c *Container) GetAchievementHandler() *handlers.AchievementHandler {
+	return c.achievementHandler
+}
+
+// GetStatsHandler 获取统计处理器
+func (c *Container) GetStatsHandler() *handlers.StatsHandler {
+	return c.statsHandler
 }
 
 // GetJobManager 获取定时任务管理器

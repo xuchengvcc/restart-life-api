@@ -213,6 +213,9 @@ func (s *gameService) MakeDecision(ctx context.Context, characterID string, opti
 	aiResponse, err := s.processGameProgressWithAI(ctx, character, gameState, optionType, true)
 	// 清除待处理的决策
 	gameState.PendingDecision = nil
+	if clearErr := s.characterRepo.ClearPendingDecision(ctx, characterID); clearErr != nil {
+		s.logger.WithError(clearErr).WithField("character_id", characterID).Warn("清除待处理决策失败")
+	}
 
 	if err != nil {
 		s.logger.WithError(err).Warn("AI决策处理失败，使用默认逻辑")
@@ -256,8 +259,11 @@ func (s *gameService) GetGameState(ctx context.Context, characterID string) (*mo
 
 // GetEventHistory 获取事件历史
 func (s *gameService) GetEventHistory(ctx context.Context, characterID string) ([]models.Event, error) {
-	// TODO: 从数据库获取事件历史
-	return []models.Event{}, nil
+	events, err := s.characterRepo.GetGameEventHistory(ctx, characterID)
+	if err != nil {
+		return nil, fmt.Errorf("获取事件历史失败: %w", err)
+	}
+	return events, nil
 }
 
 // SaveGame 保存游戏
@@ -396,6 +402,13 @@ func (s *gameService) applyGameProgressResponse(gameState *models.GameState, cha
 			endEvent.Age = gameState.CurrentAge
 			endEvent.CreatedAt = time.Now().UnixMilli()
 			gameState.KeyEvents = append(gameState.KeyEvents, endEvent)
+			if err := s.characterRepo.SaveGameEvent(context.Background(), &endEvent); err != nil {
+				s.logger.WithError(err).Error("保存结局事件失败")
+			}
+		}
+
+		if err := s.characterRepo.ClearPendingDecision(context.Background(), character.CharacterID); err != nil {
+			s.logger.WithError(err).Warn("清除待处理决策失败")
 		}
 
 		// 更新角色到数据库
@@ -467,7 +480,8 @@ func (s *gameService) applyGameProgressResponse(gameState *models.GameState, cha
 	if response.YearDescription != "" {
 		gameState.LastYearDescription = response.YearDescription
 		// 同时更新到character的current_activity字段
-		// TODO: 完善数据库更新逻辑
+		description := response.YearDescription
+		character.CurrentActivity = &description
 	}
 
 	// 添加关键事件（包括决策结果事件）
@@ -478,6 +492,9 @@ func (s *gameService) applyGameProgressResponse(gameState *models.GameState, cha
 		event.Age = gameState.CurrentAge
 		event.CreatedAt = time.Now().UnixMilli()
 		gameState.KeyEvents = append(gameState.KeyEvents, event)
+		if err := s.characterRepo.SaveGameEvent(context.Background(), &event); err != nil {
+			s.logger.WithError(err).Error("保存关键事件失败")
+		}
 	}
 
 	// 设置新的决策选项（如果有）
@@ -489,6 +506,14 @@ func (s *gameService) applyGameProgressResponse(gameState *models.GameState, cha
 			UpdatedAt:   time.Now().UnixMilli(),
 		}
 		gameState.PendingDecision = decision
+		if err := s.characterRepo.SavePendingDecision(context.Background(), decision); err != nil {
+			s.logger.WithError(err).Error("保存待处理决策失败")
+		}
+	} else {
+		gameState.PendingDecision = nil
+		if err := s.characterRepo.ClearPendingDecision(context.Background(), character.CharacterID); err != nil {
+			s.logger.WithError(err).Warn("清除待处理决策失败")
+		}
 	}
 
 	// 更新角色到数据库
@@ -850,9 +875,20 @@ func (s *gameService) fallbackGameProgress(gameState *models.GameState, characte
 	if s.shouldGenerateKeyEvent(gameState.CurrentAge) {
 		event := s.generateTemplateEvent(gameState, character)
 		gameState.KeyEvents = append(gameState.KeyEvents, event)
+		if err := s.characterRepo.SaveGameEvent(context.Background(), &event); err != nil {
+			s.logger.WithError(err).Error("保存模板事件失败")
+		}
 
 		decision := s.generateTemplateDecision(gameState, character)
 		gameState.PendingDecision = decision
+		if err := s.characterRepo.SavePendingDecision(context.Background(), decision); err != nil {
+			s.logger.WithError(err).Error("保存模板待处理决策失败")
+		}
+	} else {
+		gameState.PendingDecision = nil
+		if err := s.characterRepo.ClearPendingDecision(context.Background(), character.CharacterID); err != nil {
+			s.logger.WithError(err).Warn("清除待处理决策失败")
+		}
 	}
 	// 大多数年龄推进不生成任何事件，只更新年龄
 
@@ -868,6 +904,10 @@ func (s *gameService) fallbackGameProgress(gameState *models.GameState, characte
 
 // fallbackDecisionResult 决策结果的降级处理
 func (s *gameService) fallbackDecisionResult(gameState *models.GameState, character *models.Character, optionType string) {
+	if err := s.characterRepo.ClearPendingDecision(context.Background(), character.CharacterID); err != nil {
+		s.logger.WithError(err).Warn("清除待处理决策失败")
+	}
+
 	// 先检查游戏是否结束
 	if gameState.CurrentAge >= 85 {
 		gameState.IsGameActive = false
@@ -1123,6 +1163,9 @@ func (s *gameService) applyTemplateDecisionResult(gameState *models.GameState, c
 	// 生成决策后的事件
 	resultEvent := s.generateTemplateDecisionResultEvent(gameState, character, optionType)
 	gameState.KeyEvents = append(gameState.KeyEvents, resultEvent)
+	if err := s.characterRepo.SaveGameEvent(context.Background(), &resultEvent); err != nil {
+		s.logger.WithError(err).Error("保存模板决策结果事件失败")
+	}
 
 	// 确保属性在合理范围内
 	s.clampAttributes(&gameState.Attributes)
@@ -1254,11 +1297,19 @@ func (s *gameService) buildGameStateFromDatabase(ctx context.Context, characterI
 
 		// 从character表的current_activity字段加载年度描述
 		LastYearDescription: s.getStringValue(character.CurrentActivity),
-
-		// TODO: 从数据库加载事件历史和待处理决策
-		KeyEvents:       []models.Event{},
-		PendingDecision: nil,
 	}
+
+	events, err := s.characterRepo.GetGameEventHistory(ctx, characterID)
+	if err != nil {
+		return nil, fmt.Errorf("加载事件历史失败: %w", err)
+	}
+	gameState.KeyEvents = events
+
+	pendingDecision, err := s.characterRepo.GetPendingDecision(ctx, characterID)
+	if err != nil {
+		return nil, fmt.Errorf("加载待处理决策失败: %w", err)
+	}
+	gameState.PendingDecision = pendingDecision
 
 	s.logger.WithField("character_id", characterID).Debug("从数据库重建GameState成功")
 	return gameState, nil
