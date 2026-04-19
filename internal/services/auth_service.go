@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -194,6 +195,9 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*m
 	accessToken, newRefreshToken, expiresAt, err := s.jwtManager.RefreshToken(refreshToken)
 	if err != nil {
 		s.logger.WithError(err).Warn("Failed to refresh token")
+		if errors.Is(err, constants.ErrTokenExpired) {
+			return nil, constants.ErrTokenExpired
+		}
 		return nil, constants.ErrInvalidRefreshToken
 	}
 
@@ -396,6 +400,9 @@ func (s *authService) ResetPasswordWithToken(ctx context.Context, req *models.Re
 func (s *authService) ValidateToken(ctx context.Context, token string) (*utils.Claims, error) {
 	claims, err := s.jwtManager.ValidateToken(token)
 	if err != nil {
+		if errors.Is(err, constants.ErrTokenExpired) {
+			return nil, constants.ErrTokenExpired
+		}
 		return nil, constants.ErrTokenInvalid
 	}
 

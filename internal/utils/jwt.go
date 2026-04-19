@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -95,16 +97,20 @@ func (j *JWTManager) ValidateToken(tokenString string) (*Claims, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse token: %w", err)
+		var validationErr *jwt.ValidationError
+		if errors.As(err, &validationErr) && validationErr.Errors&jwt.ValidationErrorExpired != 0 {
+			return nil, constants.ErrTokenExpired
+		}
+		return nil, constants.ErrTokenInvalid
 	}
 
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid token")
+		return nil, constants.ErrTokenInvalid
 	}
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok {
-		return nil, fmt.Errorf("invalid token claims")
+		return nil, constants.ErrTokenInvalid
 	}
 
 	return claims, nil
@@ -117,7 +123,7 @@ func (j *JWTManager) RefreshToken(refreshToken string) (newAccessToken, newRefre
 		return "", "", 0, fmt.Errorf("invalid refresh token: %w", err)
 	}
 
-	if claims.Type != "refresh" {
+	if claims.Type != constants.TokenTypeRefresh {
 		return "", "", 0, fmt.Errorf("token is not a refresh token")
 	}
 
@@ -133,8 +139,18 @@ func (j *JWTManager) RefreshToken(refreshToken string) (newAccessToken, newRefre
 
 // ExtractTokenFromHeader 从Authorization header中提取Token
 func ExtractTokenFromHeader(authHeader string) string {
-	if len(authHeader) > len(constants.BearerPrefix) && authHeader[:len(constants.BearerPrefix)] == constants.BearerPrefix {
-		return authHeader[len(constants.BearerPrefix):]
+	authHeader = strings.TrimSpace(authHeader)
+	if authHeader == "" {
+		return ""
 	}
-	return ""
+
+	parts := strings.Fields(authHeader)
+	if len(parts) != 2 {
+		return ""
+	}
+	if !strings.EqualFold(parts[0], strings.TrimSpace(constants.BearerPrefix)) {
+		return ""
+	}
+
+	return strings.TrimSpace(parts[1])
 }

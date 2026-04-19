@@ -170,7 +170,12 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	authResponse, err := h.authService.RefreshToken(c.Request.Context(), req.RefreshToken)
 	if err != nil {
-		response := models.NewErrorResponse(models.ErrCodeTokenInvalid, "刷新Token无效或已过期")
+		if errors.Is(err, constants.ErrTokenExpired) {
+			response := models.NewErrorResponse(models.ErrCodeTokenExpired, "刷新Token已过期")
+			c.JSON(http.StatusUnauthorized, response)
+			return
+		}
+		response := models.NewErrorResponse(models.ErrCodeTokenInvalid, "刷新Token无效")
 		c.JSON(http.StatusUnauthorized, response)
 		return
 	}

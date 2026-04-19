@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/xuchengvcc/restart-life-api/internal/constants"
 	"github.com/xuchengvcc/restart-life-api/internal/models"
 	"github.com/xuchengvcc/restart-life-api/internal/services"
 	"github.com/xuchengvcc/restart-life-api/internal/utils"
@@ -29,16 +31,16 @@ func NewAuthMiddleware(authService services.AuthService, logger *logrus.Logger) 
 func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从Header中获取Token
-		authHeader := c.GetHeader("Authorization")
+		authHeader := c.GetHeader(constants.HeaderAuthorization)
 		if authHeader == "" {
-			m.respondUnauthorized(c, "Authorization header is required")
+			m.respondUnauthorized(c, models.ErrCodeTokenInvalid, "Authorization token is required")
 			return
 		}
 
 		// 提取Token
 		token := utils.ExtractTokenFromHeader(authHeader)
 		if token == "" {
-			m.respondUnauthorized(c, "Invalid authorization header format")
+			m.respondUnauthorized(c, models.ErrCodeTokenInvalid, "Invalid authorization header format")
 			return
 		}
 
@@ -46,7 +48,8 @@ func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 		claims, err := m.authService.ValidateToken(c.Request.Context(), token)
 		if err != nil {
 			m.logger.WithError(err).Warn("Invalid token provided")
-			m.respondUnauthorized(c, "Invalid or expired token")
+			code, message := mapAuthError(err)
+			m.respondUnauthorized(c, code, message)
 			return
 		}
 
@@ -64,7 +67,7 @@ func (m *AuthMiddleware) RequireAuth() gin.HandlerFunc {
 func (m *AuthMiddleware) OptionalAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 从Header中获取Token
-		authHeader := c.GetHeader("Authorization")
+		authHeader := c.GetHeader(constants.HeaderAuthorization)
 		if authHeader == "" {
 			c.Next()
 			return
@@ -145,10 +148,23 @@ func MustGetUserID(c *gin.Context) uint {
 }
 
 // respondUnauthorized 返回未授权响应
-func (m *AuthMiddleware) respondUnauthorized(c *gin.Context, message string) {
-	response := models.NewErrorResponse(models.ErrCodeTokenInvalid, message)
+func (m *AuthMiddleware) respondUnauthorized(c *gin.Context, code int, message string) {
+	response := models.NewErrorResponse(code, message)
 	c.JSON(http.StatusUnauthorized, response)
 	c.Abort()
+}
+
+func mapAuthError(err error) (int, string) {
+	switch {
+	case errors.Is(err, constants.ErrTokenExpired):
+		return models.ErrCodeTokenExpired, "Token has expired"
+	case errors.Is(err, constants.ErrNotAccessToken):
+		return models.ErrCodeTokenInvalid, "Access token is required"
+	case errors.Is(err, constants.ErrAccountDisabled):
+		return models.ErrCodePermissionDenied, "Account is disabled"
+	default:
+		return models.ErrCodeTokenInvalid, "Invalid token"
+	}
 }
 
 // CheckPermission 权限检查中间件
@@ -158,7 +174,7 @@ func (m *AuthMiddleware) CheckPermission(requiredPermissions ...string) gin.Hand
 		// 目前简单实现：只要用户已认证就有权限
 		userID, exists := GetUserID(c)
 		if !exists {
-			m.respondUnauthorized(c, "Authentication required")
+			m.respondUnauthorized(c, models.ErrCodeTokenInvalid, "Authentication required")
 			return
 		}
 
